@@ -26,11 +26,11 @@ courseRoutes.route("/count").get(async (req, res) => {
 
 // Route to add a new course (POST request)
 // POST /api/courses
-courseRoutes.route("/").post(addCourse);
+courseRoutes.route("/add-course").post(addCourse);
 
 // Route to get all courses (GET request)
 // GET /api/courses
-courseRoutes.route("/").get(getAllCourses);
+courseRoutes.route("/get-course").get(getAllCourses);
 
 // Route to get a specific course by ID (GET request with parameter)
 // GET /api/courses/:id

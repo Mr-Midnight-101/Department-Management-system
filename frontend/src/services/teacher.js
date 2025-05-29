@@ -9,8 +9,9 @@ const teacherID = async () => {
   const response = await axios.get("/api/getAlldata");
   return response.data;
 };
+
 const teacherLogin = async () => {
-  const response = await axios.post("/api/getAlldata");
+  const response = await axios.post("/api/auth/login");
   return response.data;
 };
 const teacherLogout = async () => {

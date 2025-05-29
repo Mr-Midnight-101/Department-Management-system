@@ -19,73 +19,77 @@ const populateAttendance = (query) => {
 // ⭐ Controller to add a new attendance record
 const addAttendance = asyncHandler(async (req, res) => {
   // Extract necessary fields from the request body
-  const { student, subject, recordBy, course, semester, date, status } =
-    req.body;
-
-  // Validate required fields
-  // Using a more robust check for empty/missing fields
-  if (
-    [student, subject, recordBy, course, semester, date, status].some(
-      (field) =>
-        field === undefined ||
-        field === null ||
-        (typeof field === "string" && field.trim() === "")
-    )
-  ) {
-    throw new ApiError(400, "All required fields (student, subject, recordBy, course, semester, date, status) must be provided and cannot be empty.");
-  }
-
-  // Convert date string to Date object if it's a string
-  const attendanceDate = new Date(date);
-  if (isNaN(attendanceDate.getTime())) {
-      throw new ApiError(400, "Invalid date format provided.");
-  }
-
-
-  // Check if attendance for this student, subject, and date already exists
-  const existedAttendance = await Attendance.findOne({
-    student: student,
-    subject: subject,
-    date: attendanceDate, // Check for attendance on the specific date
-  });
-
-  if (existedAttendance) {
-    // Provide more specific error message
-    throw new ApiError(409, `Attendance for student ${student} in subject ${subject} on ${attendanceDate.toDateString()} has already been marked.`);
-  }
-
-  // Create the new attendance record
-  const attendance = await Attendance.create({
-    student: student, // Assuming student, subject, recordBy, course are valid ObjectIds
-    subject: subject,
-    recordBy: recordBy,
-    course: course,
-    semester: semester, // Ensure semester matches schema enum casing
-    date: attendanceDate,
-    status: status, // Ensure status matches schema enum casing
-  });
-
-  // Fetch the created attendance record with populated details
-  const createdAttendance = await populateAttendance(
-    Attendance.findById(attendance._id)
-  );
-
-  // Check if the attendance record was successfully created and fetched
-  if (!createdAttendance) {
-    // If findById fails after create, something is seriously wrong
-    throw new ApiError(500, "Something went wrong while saving the attendance record.");
-  }
-
-  // Return a success response with the created attendance data
-  return res
-    .status(201) // Use 201 Created for successful resource creation
-    .json(
-      new Apiresponse(
-        201,
-        createdAttendance,
-        "Attendance marked successfully." // Corrected message typo
+  try {
+    const { student, subject, recordBy, course, semester, date, status } =
+      req.body;
+  
+    // Validate required fields
+    // Using a more robust check for empty/missing fields
+    if (
+      [student, subject, recordBy, course, semester, date, status].some(
+        (field) =>
+          field === undefined ||
+          field === null ||
+          (typeof field === "string" && field.trim() === "")
       )
+    ) {
+      throw new ApiError(400, "All required fields (student, subject, recordBy, course, semester, date, status) must be provided and cannot be empty.");
+    }
+  
+    // Convert date string to Date object if it's a string
+    const attendanceDate = new Date(date);
+    if (isNaN(attendanceDate.getTime())) {
+        throw new ApiError(400, "Invalid date format provided.");
+    }
+  
+  
+    // Check if attendance for this student, subject, and date already exists
+    const existedAttendance = await Attendance.findOne({
+      student: student,
+      subject: subject,
+      date: attendanceDate, // Check for attendance on the specific date
+    });
+  
+    if (existedAttendance) {
+      // Provide more specific error message
+      throw new ApiError(409, `Attendance for student ${student} in subject ${subject} on ${attendanceDate.toDateString()} has already been marked.`);
+    }
+  
+    // Create the new attendance record
+    const attendance = await Attendance.create({
+      student: student, // Assuming student, subject, recordBy, course are valid ObjectIds
+      subject: subject,
+      recordBy: recordBy,
+      course: course,
+      semester: semester, // Ensure semester matches schema enum casing
+      date: attendanceDate,
+      status: status, // Ensure status matches schema enum casing
+    });
+  
+    // Fetch the created attendance record with populated details
+    const createdAttendance = await populateAttendance(
+      Attendance.findById(attendance._id)
     );
+  
+    // Check if the attendance record was successfully created and fetched
+    if (!createdAttendance) {
+      // If findById fails after create, something is seriously wrong
+      throw new ApiError(500, "Something went wrong while saving the attendance record.");
+    }
+  
+    // Return a success response with the created attendance data
+    return res
+      .status(201) // Use 201 Created for successful resource creation
+      .json(
+        new Apiresponse(
+          201,
+          createdAttendance,
+          "Attendance marked successfully." // Corrected message typo
+        )
+      );
+  } catch (error) {
+    console.log(error)
+  }
 });
 
 // ⭐ Controller to show all attendance records

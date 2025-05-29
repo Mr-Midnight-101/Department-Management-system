@@ -1,19 +1,11 @@
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import express from "express";
-import {
-  attendanceRoutes,
-  courseRoutes,
-  gradeRoutes,
-  settingRoutes,
-  studentRoutes,
-  subjectRoutes,
-  teacherRoutes,
-} from "./routes/all.routes.js";
+import errorHandler from "./middleware/errorHandler.js";
 
 const app = express();
 //for json data parsing
-app.use(express.json());
+app.use(express.json({ limit: "16kb" }));
 app.use(
   express.urlencoded({
     extended: true, //!object inside objects, like nesting
@@ -30,15 +22,38 @@ app.use(
 app.use(express.static("public"));
 app.use(cookieParser());
 
+// Block all routes that don't start with /website/api
+app.use((req, res, next) => {
+  if (!req.path.startsWith("/api")) {
+    return res.status(403).json({
+      success: false,
+      message: "Access to this route is forbidden",
+    });
+  }
+  next();
+});
+
 //!route declaration
 //? auth is not assigned
+import {
+  attendanceRoutes,
+  courseRoutes,
+  gradeRoutes,
+  settingRoutes,
+  studentRoutes,
+  subjectRoutes,
+  teacherRoutes,
+} from "./routes/all.routes.js";
+import countRoute from "./routes/count.js";
 app.use("/api/attendance", attendanceRoutes);
 app.use("/api/course", courseRoutes);
 app.use("/api/grades", gradeRoutes);
 app.use("/api/setting", settingRoutes);
 app.use("/api/student", studentRoutes);
 app.use("/api/subjects", subjectRoutes);
-app.use("/api", teacherRoutes);
+app.use("/api/teacher", teacherRoutes);
+app.use("/api/count", countRoute);
+app.use(errorHandler);
 
 export { app };
 

@@ -12,7 +12,7 @@ import {
   updateTeacherAvatar,
   getData,
   getAllData,
-  totalDocument
+  totalDocument,
 } from "../controllers/teacher.controller.js"; // Corrected import path and names
 import { verifyJWT } from "../middleware/auth.middleware.js"; // Assuming this middleware exists
 import { upload } from "../middleware/multer.middleware.js"; // Assuming this middleware exists
@@ -27,10 +27,10 @@ teacherRoutes
   .post(upload.single("avatar"), registerTeacher);
 
 // Route for teacher login
-teacherRoutes.route("/auth/login").post(verifyJWT, loginTeacher);
+teacherRoutes.route("/auth/login").post(loginTeacher);
 
 // Route to refresh access token using refresh token (Doesn't require verifyJWT as it validates the refresh token itself)
-teacherRoutes.route("/auth/refresh-token").post(refreshAccessToken); // POST is common for sending token in body, PUT is also possible
+teacherRoutes.route("/auth/refresh-token").post(verifyJWT, refreshAccessToken); // POST is common for sending token in body, PUT is also possible
 
 // --- Secured Routes (Require JWT Verification) ---
 
@@ -65,3 +65,4 @@ teacherRoutes.route("/getAlldata").get(getAllData);
 teacherRoutes.route("/total-document").get(totalDocument);
 
 export { teacherRoutes }; // Export the router
+getAllData;

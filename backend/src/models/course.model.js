@@ -24,13 +24,13 @@ const courseSchema = new mongoose.Schema({
   },
   // Academic year the course belongs to (e.g., "2023-2024")
   academicYear: {
-    type: String,
+    type: Number,
     required: true,
     trim: true,
   },
   // Semester the course is offered in
   semester: {
-    type: String,
+    type: Number,
     required: true, // Made required based on controller validation logic
     trim: true,
     // Ensure consistency with controller/enum if used elsewhere

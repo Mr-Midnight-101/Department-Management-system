@@ -5,7 +5,6 @@ import { Router } from "express";
 import {
   addSubject, // Renamed import
   getAllSubjects, // Renamed import
-  getSubjectById, // Renamed import
   updateSubject, // Renamed import
 } from "../controllers/subject.controller.js"; // Corrected import path and names
 
@@ -22,16 +21,14 @@ subjectRoutes.route("/count").get(async (req, res) => {
 
 // Route to add a new subject (POST request)
 // POST /api/subjects
-subjectRoutes.route("/").post(addSubject);
+subjectRoutes.route("/add-subject").post(addSubject);
 
 // Route to get all subjects (GET request)
 // GET /api/subjects
-subjectRoutes.route("/").get(getAllSubjects);
+subjectRoutes.route("/get-subjects").get(getAllSubjects);
 
 // Route to get a specific subject by ID (GET request with parameter)
 // GET /api/subjects/:id
-subjectRoutes.route("/:id").get(getSubjectById);
-
 // Route to update a specific subject by ID (PATCH request with parameter)
 // Using PATCH as we're likely doing a partial update via $set
 // PATCH /api/subjects/:id
