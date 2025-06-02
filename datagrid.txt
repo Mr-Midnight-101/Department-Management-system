@@ -1,0 +1,11 @@
+const autosizeOptions = {
+  includeOutliers: true,
+};
+
+export default function ColumnAutosizingDynamicRowHeight() {
+  const apiRef = useGridApiRef();
+
+}
+      <Button onClick={() => apiRef.current?.autosizeColumns(autosizeOptions)}>
+        Autosize Columns
+      </Button>

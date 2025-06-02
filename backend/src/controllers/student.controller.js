@@ -35,15 +35,16 @@ const addStudent = asyncHandler(async (req, res) => {
       email,
       contactInfo,
       fatherName,
-      category,
-      studentType,
-      admissionYear,
     ];
 
     if (requiredFields.some((field) => field?.trim() == "" || field == null)) {
       throw new ApiError(400, `All required fields must be filled.`);
     }
     console.log("this is from frontend dateof birth", dateOfBirth);
+
+    if ([studentType, category, admissionYear].some((field) => field == null)) {
+      throw new ApiError(400, `All required fields must be filled.`);
+    }
 
     const dob = dateOfBirth;
     if (!dayjs(dob).isValid()) {
@@ -106,10 +107,10 @@ const addStudent = asyncHandler(async (req, res) => {
         postalCode: fullAdd?.postalCode?.trim() || "",
         country: fullAdd?.country?.trim().toUpperCase() || "INDIA",
       },
-      category: category.trim().toUpperCase(),
+      category: category || "GEN",
       currentCourse: currentCourse || null,
-      studentType: studentType,
-      admissionYear: admissionYear || "",
+      studentType: studentType || "Regular",
+      admissionYear: admissionYear || new Date().getFullYear(),
     });
 
     const student = await Student.aggregate([
@@ -309,10 +310,30 @@ const studentCount = asyncHandler(async (req, res) => {
   }
 });
 
+const deleteStudent = asyncHandler(async (req, res) => {
+  try {
+    const { id } = req.params;
+    console.log(id);
+
+    if (!id) throw new ApiError(400, "Id is empty");
+
+    const student = await Student.findByIdAndDelete(id);
+    console.log("data of student that is going to delete", student);
+
+    if (!student) throw new ApiError(404, "cannot find student");
+    return res
+      .status(200)
+      .json(new Apiresponse(200, student, "student deleted successfully"));
+  } catch (error) {
+    console.log("Cant delete student", error);
+  }
+});
+
 export {
   addStudent,
   getAllStudents,
   getStudentById,
   updateStudent,
   studentCount,
+  deleteStudent,
 };

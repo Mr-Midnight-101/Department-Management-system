@@ -3,13 +3,13 @@
 import { Router } from "express";
 import {
   addCourse,
+  deleteCourse,
   getAllCourses, // Import the new function
   getCourseById,
   updateCourse,
 } from "../controllers/course.controller.js"; // Corrected import to named exports
 import { Course } from "../models/course.model.js";
 import Apiresponse from "../utils/Apiresponse.js";
-
 
 const courseRoutes = Router(); // Renamed for clarity if needed, but kept original name
 
@@ -38,7 +38,8 @@ courseRoutes.route("/:id").get(getCourseById);
 
 // Route to update a specific course by ID (PUT request with parameter)
 // PUT /api/courses/:id
-courseRoutes.route("/:id").put(updateCourse);
+courseRoutes.route("/:id").patch(updateCourse);
 
+courseRoutes.route("/:id").delete(deleteCourse);
 // Export the router
 export { courseRoutes };

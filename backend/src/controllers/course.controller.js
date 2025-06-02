@@ -6,8 +6,12 @@ import ApiError from "../utils/ApiError.js";
 import Apiresponse from "../utils/Apiresponse.js";
 import { mongo } from "mongoose";
 import mongoose from "mongoose";
+import { capitalize } from "../utils/capitalize.js";
 // Subject model might be needed for validation or population, already referenced
 // import { Subject } from "../models/subject.model.js";
+const populateCourse = (query) => {
+  return query.populate("subjectName");
+};
 
 // ⭐ Controller to add a new course
 const addCourse = asyncHandler(async (req, res) => {
@@ -76,7 +80,7 @@ const addCourse = asyncHandler(async (req, res) => {
   // Create the new course document
   const course = await Course.create({
     courseCode: courseCode.trim().toUpperCase(), // Trim and uppercase code
-    courseName: courseName.trim(), // Trim name
+    courseName: capitalize(courseName.trim()), // Trim name
     academicYear: academicYear, // Trim year
     semester: semester, // Trim semester (ensure casing matches schema enum if applicable)
     subjects: subjects || [], // Use provided subjects array or an empty array if none provided
@@ -84,23 +88,7 @@ const addCourse = asyncHandler(async (req, res) => {
   });
 
   // Fetch the created course with populated subject details
-  const createdCourse = await Course.aggregate([
-    { $match: { _id: course._id } },
-    {
-      $lookup: {
-        from: "subjects",
-        localField: "subjects",
-        foreignField: "_id",
-        as: "subjectName",
-      },
-    },
-    {
-      $unwind: {
-        path: "$subjects",
-        preserveNullAndEmptyArrays: true,
-      },
-    },
-  ]);
+  const createdCourse = await populateCourse(Course.findOne(course._id))
 
   // Check if course creation was successful
   if (!createdCourse) {
@@ -273,5 +261,23 @@ const updateCourse = asyncHandler(async (req, res) => {
     .json(new Apiresponse(200, updatedCourse, "Course updated successfully.")); // Corrected message
 });
 
+const deleteCourse = asyncHandler(async (req, res) => {
+  try {
+    const { id } = req.params || req.body;
+    if (!id)
+      throw new ApiError(200, "course could not find, Id is not recieved");
+    const course = await Course.findByIdAndDelete(id);
+    if (!course)
+      throw new ApiError(
+        200,
+        "course could not find, Id is recieved but could not find"
+      );
+    return res
+      .status(200)
+      .json(new Apiresponse(200, course, "Course is deleted successfully"));
+  } catch (error) {
+    console.log(error, "try catch error while deletion of course");
+  }
+});
 // Export all relevant controller functions
-export { addCourse, getAllCourses, getCourseById, updateCourse }; // Added getAllCourses
+export { addCourse, getAllCourses, getCourseById, updateCourse, deleteCourse }; // Added getAllCourses

@@ -24,12 +24,13 @@ const TopBar = () => {
 
   return (
     <Box
-      maxWidth="xl"
+      maxWidth="100%"
       display="flex"
       justifyContent="space-between"
       alignItems="center"
       flexWrap="wrap"
       sx={{
+        flex: 1,
         // backgroundColor: colors.grey[100],
         flexDirection: {
           xs: "column-reverse", // Stack on small screens
@@ -38,12 +39,12 @@ const TopBar = () => {
         alignItems: {
           xs: "flex-end",
         },
-        m: 2,
+        m: "16px 0 40px 16px",
         mr: {
           xs: 12,
           md: 12,
           lg: 12,
-          xl: 0,
+          xl: 1,
         },
       }}
     >
@@ -52,7 +53,18 @@ const TopBar = () => {
         flexGrow
         gap={2}
         sx={{
-          background: colors.grey[800],
+          backgroundColor: "rgba(255, 255, 255, 0.2)" /* 20% opaque white */,
+          /* backdrop-filter will blur and desaturate the *actual gradient behind this element* */
+          backdropFlter: "blur(8px)" /* Adjust blur strength as desired */,
+          // -webkit-backdrop-filter: blur(8px); /* Safari support */
+
+          /* Optional: Subtle border for "glass" effect */
+          border: " 1px solid rgba(255, 255, 255, 0.3)",
+          borderRadius: "4px" /* Soften corners */,
+          boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)" /* Subtle shadow */,
+
+          /* Ensure content inside is readable */
+          color: colors.text[100],
 
           width: {
             xs: "100%", // Full width on small screens
@@ -62,7 +74,10 @@ const TopBar = () => {
         }}
         borderRadius="3px"
       >
-        <InputBase sx={{ ml: 2, flex: 1 }} placeholder="Search" />
+        <InputBase
+          sx={{ color: colors.text[100], ml: 2, flex: 1 }}
+          placeholder="Search"
+        />
         <IconButton type="button" sx={{ p: 1 }}>
           <SearchOutlinedIcon />
         </IconButton>
@@ -75,8 +90,8 @@ const TopBar = () => {
         borderRadius="3px"
         color={colors.grey[500]}
         sx={{
-          // background: colors.grey[800],
-          mr: 2,
+          // background: colors.grey[100],
+          mr: 0,
           width: {
             xs: "40%", // Full width on small screens
             sm: "auto", // Half on larger screens

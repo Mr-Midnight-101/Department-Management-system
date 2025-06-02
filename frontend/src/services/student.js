@@ -92,4 +92,23 @@ const updateStudentDetails = async (updateData) => {
     console.log(error);
   }
 };
-export { studentCount, getStudents, studentRegister, updateStudentDetails };
+
+const deleteStudent = async (deleteStudent) => {
+  try {
+    const { _id } = deleteStudent;
+
+    const student = await axios.delete(`/api/student/${_id}`);
+    if (!student) console.log("deletion error cant delete");
+    return student;
+  } catch (error) {
+    console.log("deletion error", error);
+  }
+};
+
+export {
+  studentCount,
+  getStudents,
+  studentRegister,
+  updateStudentDetails,
+  deleteStudent,
+};

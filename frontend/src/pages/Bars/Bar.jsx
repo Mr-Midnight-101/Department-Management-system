@@ -2,7 +2,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import React, { useState } from "react";
 import { ProSidebar, Menu, MenuItem } from "react-pro-sidebar";
-import { Box, IconButton, Typography, useTheme } from "@mui/material";
+import { Box, Typography, useTheme } from "@mui/material";
 import { Link } from "react-router-dom";
 import SchoolOutlinedIcon from "@mui/icons-material/SchoolOutlined"; //students
 import LibraryBooksOutlinedIcon from "@mui/icons-material/LibraryBooksOutlined"; //course
@@ -47,22 +47,35 @@ const Bar = () => {
           width: "100% !important",
         },
         "& .pro-sidebar-inner": {
-          borderRadius: " 0 4px 4px 0",
-
-          background: `${colors.black[500]} !important`,
+          borderRadius: "0 4px 4px 0",
+          background: `${colors.gradient[100]} !important`,
         },
         "& .pro-icon-wrapper": {
           backgroundColor: "transparent !important",
         },
         "& .pro-inner-item": {
           padding: "5px 24px 5px 20px !important",
-          "&:hover": { color: `${colors.grey[600]} !important` },
+          color: `${colors.grey[800]} !important`,
+          "&:hover": { color: `${colors.text[100]} !important` },
         },
         "& .pro-menu-item.active": {
-          color: `${colors.red[500]} !important `,
+          backgroundColor: "rgba(255, 255, 255, 0.2)" /* 20% opaque white */,
+          /* backdrop-filter will blur and desaturate the *actual gradient behind this element* */
+          backdropFlter: "blur(8px)" /* Adjust blur strength as desired */,
+          // -webkit-backdrop-filter: blur(8px); /* Safari support */
+
+          /* Optional: Subtle border for "glass" effect */
+          border: " 1px solid rgba(255, 255, 255, 0.3)",
+          borderRadius: "4px" /* Soften corners */,
+          boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)" /* Subtle shadow */,
+
+          /* Ensure content inside is readable */
+          color: colors.text[100],
+          // color: `${colors.yellow[100]} !important`,
+          margin: "1px",
         },
         "& .pro-menu-item.active, & .pro-menu-item.active-item": {
-          color: `${colors.red[500]} !important`,
+          color: `${colors.text[100]} !important`,
         },
       }}
     >
@@ -73,7 +86,7 @@ const Bar = () => {
             onClick={() => setCollapsed(!collapsed)}
             style={{
               width: "10px",
-              margin: " 0 10px 10px 0 ",
+              margin: "0 10px 10px 0",
             }}
           />
 
@@ -86,9 +99,11 @@ const Bar = () => {
               setSelected={setSelected}
             />
             <Typography
+              variant="h5"
               sx={{
                 padding: "12px 22px",
                 fontWeight: "bold",
+                color: colors.text[100],
               }}
             >
               Data
@@ -120,7 +135,6 @@ const Bar = () => {
               icon={<SupervisorAccountOutlinedIcon />}
               selected={selected}
               setSelected={setSelected}
-              color={colors.white[100]}
             />
             <SidebarItem
               title="Attendance"
@@ -130,12 +144,14 @@ const Bar = () => {
               setSelected={setSelected}
             />
             <Typography
+              variant="h5"
               sx={{
                 padding: "12px 22px",
                 fontWeight: "bold",
+                color: colors.text[100],
               }}
             >
-              Chart
+              {"Insight"}
             </Typography>
             <SidebarItem
               title="Bar"

@@ -1,95 +1,171 @@
 /* eslint-disable no-unused-vars */
 import { createContext, useMemo, useState } from "react";
-import { createTheme, Dialog, responsiveFontSizes } from "@mui/material";
-import { GridFilterForm, GridPanel, GridPanelContent } from "@mui/x-data-grid";
-import { green } from "@mui/material/colors";
+import { createTheme, Dialog, Paper, responsiveFontSizes } from "@mui/material";
+import {
+  DataGrid,
+  GridCell,
+  GridColumnHeaders,
+  GridHeader,
+  GridPanelContent,
+} from "@mui/x-data-grid";
 
-const lightGradient = "linear-gradient(to right, #cc95c0, #dbd4b4, #7aa1d2)";
-const darkGradient = "linear-gradient(to right, #5a3a59, #4c4a3e, #2c3e56)";
+const lightGradient =
+  "radial-gradient(circle at 70% 30%, rgba(255, 192, 203, 0.7), transparent 50%),radial-gradient(circle at 30% 70%, rgba(138, 43, 226, 0.7), transparent 50%),#f8f8f8";
+
+const darkGradient =
+  "radial-gradient(circle 300px at 75% 25%, rgba(255, 0, 127, 0.6), transparent 40%), radial-gradient(circle at 25% 75%, rgba(75, 0, 130, 0.6), transparent 40%), #000";
 export const getColorTokens = (mode) => ({
   ...(mode === "dark"
     ? {
-        black: {
-          100: "#ccd5dd", //light
-          200: "#99abbb",
-          300: "#668098",
-          400: "#335676",
-          500: "#002c54", //Mid
-          600: "#002343",
-          700: "#001a32",
-          800: "#001222",
-          900: "#000911", //dark
+        primary: {
+          100: "#f1f1f1",
+          200: "#878d9d",
+          300: "#707785",
+          400: "#5a606c",
+          500: "#444954",
+          600: "#2e323d",
+          700: "#191c24",
+          800: "#13161c",
+          900: "#0f1014",
+        },
+        secondary: {
+          100: "#fce0eb",
+          200: "#f8c2d2",
+          300: "#f2a8c0",
+          400: "#e177a1",
+          500: "#cb4681",
+          600: "#af1763",
+          700: "#8c0f4b",
+          800: "#5d0932",
+          900: "#2b0418",
+        },
+        positive: {
+          100: "#75D475", // base
+        },
+        negative: {
+          100: "#FF5005", // base
+        },
+        blue: {
+          100: "#0d6efd", // base
+        },
+        green: {
+          100: "#198754", // base
+        },
+        cyan: {
+          100: "#0dcaf0", // base
         },
         red: {
-          100: "#fad9dd", //light
-          200: "#f6b3bc",
-          300: "#f18d9a",
-          400: "#ed6779",
-          500: "#e84157", //Mid
-          600: "#ba3446",
-          700: "#8b2734",
-          800: "#5d1a23",
-          900: "#2e0d11", //dark
+          100: "#ab2e3c", // base
+        },
+        yellow: {
+          100: "#ffc107", // base
         },
         grey: {
-          100: "#e6e6e6", //light
-          200: "#cccccc",
-          300: "#b3b3b3",
-          400: "#999999",
-          500: "#808080", //Mid
-          600: "#666666",
-          700: "#4d4d4d",
-          800: "#333333",
-          900: "#1a1a1a", //dark
+          100: "#111111", // darkest
+          200: "#4d4d4d",
+          300: "#666666",
+          400: "#808080",
+          500: "#999999",
+          600: "#b3b3b3",
+          700: "#cccccc",
+          800: "#e0e0e0",
+          900: "#f5f5f5", // lightest
         },
-        white: {
-          100: "ffffff",
+        gradient: {
+          100: darkGradient,
+        },
+        text: {
+          100: "#ffffff",
+          200: "#cccccc",
+          300: "#888888",
         },
         background: {
-          100: darkGradient,
-          200: "#1e1e1e",
+          paper: "rgba(255, 255, 255, 0.8)",
+        },
+        clay: {
+          100: "#21213A",
+        },
+        pink: {
+          100: "#7A003D",
+        },
+        ArtyClick: {
+          100: "#007399",
         },
       }
     : {
-        black: {
-          900: "#ccd5dd", //light
-          800: "#99abbb",
-          700: "#668098",
-          600: "#335676",
-          500: "#002c54", //Mid
-          400: "#002343",
-          300: "#001a32",
-          200: "#001222",
-          100: "#000911", //dark
+        ArtyClick: {
+          100: "#CCF2FF",
+        },
+        pink: {
+          100: "#FAE1ED",
+        },
+        primary: {
+          100: "#0f1014",
+          200: "#13161c",
+          300: "#191c24", // base
+          400: "#2e323d",
+          500: "#444954",
+          600: "#5a606c",
+          700: "#707785",
+          800: "#878d9d",
+          900: "#f1f1f1",
+        },
+        secondary: {
+          100: "#2b0418",
+          200: "#5d0932",
+          300: "#8c0f4b",
+          400: "#af1763", // base
+          500: "#cb4681",
+          600: "#e177a1",
+          700: "#f2a8c0",
+          800: "#f8c2d2",
+          900: "#fce0eb",
+        },
+        clay: {
+          100: "#E1E1EB",
+        },
+        positive: {
+          100: "#75D475", // base
+        },
+        negative: {
+          100: "#FF5005", // base
+        },
+        blue: {
+          100: "#85B5FE", // base
+        },
+        green: {
+          100: "#389F6F", // base
+        },
+        cyan: {
+          100: "#0dcaf0", // base
         },
         red: {
-          900: "#fad9dd", //light
-          800: "#f6b3bc",
-          700: "#f18d9a",
-          600: "#ed6779",
-          500: "#e84157", //Mid
-          400: "#ba3446",
-          300: "#8b2734",
-          200: "#5d1a23",
-          100: "#2e0d11", //dark
+          100: "#DD9DA4", // base
+        },
+        yellow: {
+          100: "#ffc107", // base
         },
         grey: {
-          900: "#e6e6e6", //light
-          800: "#cccccc",
-          700: "#b3b3b3",
-          600: "#999999",
-          500: "#808080", //Mid
-          400: "#666666",
-          300: "#4d4d4d",
-          200: "#333333",
-          100: "#1a1a1a", //dark
-        },
-        white: {
-          100: "ffffff",
+          100: "#f5f5f5", // lightest
+          200: "#e0e0e0",
+          300: "#cccccc",
+          400: "#b3b3b3",
+          500: "#999999", // medium grey
+          600: "#808080",
+          700: "#666666",
+          800: "#4d4d4d",
+          900: "#111111", // darkest
         },
         background: {
+          paper: "rgba(0, 0, 0, 0.6)",
+        },
+        gradient: {
           100: lightGradient,
-          200: "#ffffff",
+        },
+        text: {
+          100: "#000000",
+          200: "#333333",
+          300: "#888888",
         },
       }),
 });
@@ -103,36 +179,58 @@ export const createCustomTheme = (mode) => {
       ...(mode === "dark"
         ? {
             primary: {
-              main: colors.black[700],
+              main: colors.primary[600],
             },
             secondary: {
-              main: colors.red[700],
+              main: colors.secondary[500],
+            },
+            error: {
+              main: colors.negative[100],
+            },
+            success: {
+              main: colors.positive[100],
             },
             neutral: {
-              main: colors.grey[700],
-              dark: colors.grey[500],
+              main: colors.grey[500],
+              dark: colors.grey[900],
               light: colors.grey[100],
             },
             background: {
-              default: colors.black[700],
+              default: colors.background.paper,
               paper: colors.background.paper,
+            },
+            text: {
+              primary: colors.text[100],
+              secondary: colors.text[200],
+              disabled: colors.text[300],
             },
           }
         : {
             primary: {
-              main: colors.black[700],
+              main: colors.primary[600],
             },
             secondary: {
-              main: colors.red[700],
+              main: colors.secondary[500],
+            },
+            error: {
+              main: colors.negative[100],
+            },
+            success: {
+              main: colors.positive[100],
             },
             neutral: {
-              main: colors.grey[700],
-              dark: colors.grey[500],
-              light: colors.grey[100],
+              main: colors.grey[500],
+              dark: colors.grey[800],
+              light: colors.grey[200],
             },
             background: {
-              default: colors.black[700],
+              default: colors.background.paper,
               paper: colors.background.paper,
+            },
+            text: {
+              primary: colors.text[100],
+              secondary: colors.text[200],
+              disabled: colors.text[300],
             },
           }),
     },
@@ -165,15 +263,21 @@ export const createCustomTheme = (mode) => {
       },
     },
     components: {
+      MuiMenu: {
+        styleOverrides: {
+          //footer menu panel
+          paper: {
+            backgroundColor: colors.primary[900], // or colors.black[700]
+            color: colors.text[100],
+          },
+        },
+      },
       MuiDataGrid: {
         styleOverrides: {
-          menu: {
-            // Styles for column menu (3-dots dropdown)
-            backgroundColor: mode === "dark" ? "#000911" : "#ccd5dd", // Dark background
-            color: mode === "dark" ? "#000911" : "#ccd5dd", // White text
-          },
+          //filter panel
           panelContent: {
-            backgroundColor: mode === "dark" ? "#000911" : "#ccd5dd",
+            backgroundColor: colors.clay[100],
+            color: colors.text[100],
           },
         },
       },
@@ -182,45 +286,44 @@ export const createCustomTheme = (mode) => {
         styleOverrides: {
           root: {
             "& .MuiInputLabel-root.Mui-focused": {
-              color: colors.black[100],
+              color: colors.primary[100],
             },
             "& .MuiOutlinedInput-root": {
               "& fieldset": {
-                borderColor: colors.grey[500],
+                borderColor: colors.green[500],
               },
               "&:hover fieldset": {
-                borderColor: colors.grey[300],
+                borderColor: colors.cyan[300],
               },
               "&.Mui-focused fieldset": {
-                borderColor: colors.grey[100],
+                borderColor: colors.grey[900],
               },
             },
           },
         },
       },
-      MuiMenu: {
-        styleOverrides: {
-          paper: {
-            backgroundColor: colors.black[800], // or colors.black[700]
-            color: colors.black[800]
-          },
-        },
-      },
+      //container css
       MuiCssBaseline: {
         styleOverrides: {
           body: {
-            background: mode === "dark" ? darkGradient : lightGradient,
+            color: colors.text[100],
+            background: colors.gradient[100],
             backgroundRepeat: "no-repeat",
             backgroundSize: "cover",
             minHeight: "100vh",
+          },
+          ".MuiDataGrid-menu .MuiPaper-root": {
+            backgroundColor: colors.pink[100] + " !important",
+            color: colors.text[100] + " !important",
           },
         },
       },
       MuiDialog: {
         styleOverrides: {
           paper: {
-            background: colors.grey[800],
-            color: colors.grey[100],
+            background: colors.gradient[100],
+            color: colors.text[100],
+            border: `1px solid ${colors.grey[600]}`,
           },
         },
       },

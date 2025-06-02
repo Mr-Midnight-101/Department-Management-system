@@ -27,20 +27,21 @@ const courseSchema = new mongoose.Schema({
     type: Number,
     required: true,
     trim: true,
+    default:3
   },
   // Semester the course is offered in
   semester: {
     type: Number,
     required: true, // Made required based on controller validation logic
     trim: true,
+    default:6
     // Ensure consistency with controller/enum if used elsewhere
   },
   // Array of subjects included in this course
   subjects: [
     {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Subject", // Reference to the Subject model
-      required: true, // Indicates each item in the array must be a valid ObjectId
+      ref: "Subject", // Reference to the Subject model // Indicates each item in the array must be a valid ObjectId
     },
   ],
   // Total credit points for the course
