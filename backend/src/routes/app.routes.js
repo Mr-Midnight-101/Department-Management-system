@@ -1,4 +1,4 @@
-import { attendanceRoutes } from "./attendance.route.js"; // import authRoutes from "./authRoutes.js";
+import { attendanceRoutes } from "./attendance.route.js";
 import { courseRoutes } from "./course.route.js";
 import { gradeRoutes } from "./grade.route.js";
 import { settingRoutes } from "./setting.route.js";

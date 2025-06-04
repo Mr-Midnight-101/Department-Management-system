@@ -1,24 +1,24 @@
-// src/routes/attendanceRoutes.js
-
 import { Router } from "express";
 import {
   addAttendance,
   showAllAttendance,
-  getAttendanceById, // Import the new controller function
-} from "../controllers/attendance.controller.js"; // Corrected import
+  getAttendanceById,
+  editAttendance,
+  attendanceCount,
+} from "../controllers/attendance.controller.js";
 
 const attendanceRoutes = Router();
 
-// Define routes for attendance
-// Use specific paths for clarity and REST conventions
+attendanceRoutes.route("/count").get(attendanceCount); // get attendance count
 
-// Route to add a new attendance record (POST request)
-attendanceRoutes.route("/add").post(addAttendance);
+attendanceRoutes
+  .route("/")
+  .post(addAttendance) //add a new attendance record
+  .get(showAllAttendance); //get all attendance records
 
-// Route to get all attendance records (GET request)
-attendanceRoutes.route("/all").get(showAllAttendance);
-
-// Route to get a specific attendance record by ID (GET request with parameter)
-attendanceRoutes.route("/:id").get(getAttendanceById); // Use /:id for fetching by ID
+attendanceRoutes
+  .route("/:id")
+  .get(getAttendanceById) // get a specific attendance record by ID
+  .patch(editAttendance); //edit a specific attendance record by ID
 
 export { attendanceRoutes }; // Export the router

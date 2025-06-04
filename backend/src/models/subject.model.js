@@ -1,56 +1,43 @@
-// src/models/subject.model.js
-
 import mongoose from "mongoose";
 
-// Define the schema for the Subject model
 const subjectSchema = new mongoose.Schema(
   {
-    // Unique code for the subject
     subjectCode: {
       type: String,
-      required: true,
-      unique: true, // Added unique constraint
-      index: true, // Indexing for efficient lookups
+      required: [true, "Subject code is required"],
+      unique: true,
       trim: true,
-      uppercase: true, // Store in uppercase for consistency
+      uppercase: true,
     },
-    // Name of the subject
     subjectName: {
       type: String,
-      required: true,
-      unique: true, // Added unique constraint
+      required: [true, "Subject name is required"],
+      unique: true,
       trim: true,
-      // lowercase: true, // Keep original casing or decide on one standard
     },
-    // Maximum marks for the theory part
-    maxMarksTheory: { // Corrected typo from MaxMarksTheory
+    subjectMaxMarksTheory: {
       type: Number,
-      required: true,
-      min: 0, // Marks cannot be negative
+      required: [true, "Maximum theory marks are required"],
+      min: [0, "Marks cannot be negative"],
     },
-    // Maximum marks for the practical part
-    maxMarksPractical: { // Corrected typo from MaxMarksPractical
+    subjectMaxMarksPractical: {
       type: Number,
-      required: true,
-      min: 0, // Marks cannot be negative
+      required: [true, "Maximum practical marks are required"],
+      min: [0, "Marks cannot be negative"],
     },
-    // Credit value of the subject
-    subCredit: {
+    subjectCreditPoints: {
       type: Number,
-      required: true,
-      min: 0, // Credit cannot be negative
+      required: [true, "Credit points are required"],
+      min: [0, "Credit points cannot be negative"],
     },
-    // Array of teachers assigned to this subject
-    subjectTeacher: [
+    subjectTeachers: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Teacher", // Reference to the Teacher model
+        ref: "Teacher",
       },
     ],
-    // Timestamps for creation and updates
   },
-  { timestamps: true } // Use timestamps option
+  { timestamps: true }
 );
 
-// Create and export the Subject model
 export const Subject = mongoose.model("Subject", subjectSchema);

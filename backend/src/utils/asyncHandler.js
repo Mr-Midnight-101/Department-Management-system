@@ -1,8 +1,7 @@
-//! wrapper of async handler function utility to handle middlewares and asyncs functions.
-//? It is using higher order function
+/* 
+ ⭐ wrapper of async handler function utility to handle middlewares and asyncs functions.
 
-//* const asyncHandler = (fn)=>()=>{}
-//* takes fn as parameter and pass the required parameters
+*/
 
 export const asyncHandler = (requestHandler) => {
   return (req, res, next) => {
@@ -13,6 +12,9 @@ export const asyncHandler = (requestHandler) => {
 };
 
 /*
+It is using higher order function
+const asyncHandler = (fn)=>()=>{}
+takes fn as parameter and pass the required parameters 
 const asyncHandler = (fn) => async (req, res, next) => {
     try {
     await (req,res,next)

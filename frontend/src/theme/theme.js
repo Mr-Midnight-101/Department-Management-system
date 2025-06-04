@@ -197,7 +197,6 @@ export const createCustomTheme = (mode) => {
             },
             background: {
               default: colors.background.paper,
-              paper: colors.background.paper,
             },
             text: {
               primary: colors.text[100],
@@ -225,7 +224,6 @@ export const createCustomTheme = (mode) => {
             },
             background: {
               default: colors.background.paper,
-              paper: colors.background.paper,
             },
             text: {
               primary: colors.text[100],
@@ -298,6 +296,7 @@ export const createCustomTheme = (mode) => {
               "&.Mui-focused fieldset": {
                 borderColor: colors.grey[900],
               },
+              "& .MuiTextField-input:focus": {},
             },
           },
         },

@@ -1,119 +1,88 @@
-// src/models/grade.model.js
-
 import mongoose from "mongoose";
-// No need to import Schema explicitly unless using it directly like `new Schema(...)`
-// import { Schema } from "mongoose";
 
-// Define the schema for the Grade model
 const gradeSchema = new mongoose.Schema(
   {
-    // Reference to the student who received the grade
-    student: {
+    gradeStudent: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Student", // Assumes a 'Student' model exists
+      ref: "Student",
       required: true,
-      index: true, // Indexing for efficient lookups by student
     },
-    // Reference to the subject the grade is for
-    subject: {
+    gradeSubject: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Subject", // Assumes a 'Subject' model exists
-      required: true,
-      index: true, // Indexing for efficient lookups by subject
-    },
-    // The academic year of the exam (e.g., 2023)
-    examYear: {
-      type: Number, // Changed from Date to Number for just the year
-      required: true,
-      min: 1900, // Basic validation
-      max: new Date().getFullYear() + 5, // Prevent future years far out
-    },
-    // Reference to the course the student is enrolled in for this grade
-    course: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Course", // Assumes a 'Course' model exists
+      ref: "Subject",
       required: true,
     },
-    // Marks obtained in the practical part of the subject
-    obtMarksPractical: {
+    gradeExamYear: {
       type: Number,
       required: true,
-      min: 0, // Marks cannot be negative
+      min: 1900,
+      max: new Date().getFullYear() + 5,
     },
-    // Marks obtained in the theory part of the subject
-    obtMarksTheory: { // Corrected typo from ObtMarksTheory
-      type: Number,
+    gradeCourse: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Course",
       required: true,
-      min: 0, // Marks cannot be negative
     },
-    // Total marks obtained (usually obtMarksPractical + obtMarksTheory)
-    totalMarks: {
+    gradeObtainedPractical: {
       type: Number,
       required: true,
       min: 0,
     },
-    // The letter grade (e.g., A, B+, C)
+    gradeObtainedTheory: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+    gradeTotalMarks: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
     gradeLetter: {
       type: String,
       required: true,
       trim: true,
-      uppercase: true, // Store in uppercase for consistency
+      uppercase: true,
     },
-    // The numerical grade point (e.g., 4.0, 3.7)
     gradePoint: {
       type: Number,
       required: true,
-      min: 0, // Grade point cannot be negative
+      min: 0,
     },
-    // The credit value of the subject (should ideally come from Subject model)
-    // Assuming for now it's stored here based on controller logic
-    creditPoint: {
-      type: Number,
-      required: true,
-      min: 0, // Credit point cannot be negative
-    },
-     // Total credit points for this subject (gradePoint * creditPoint)
-    totalCreditPoint: {
+    gradeCreditPoint: {
       type: Number,
       required: true,
       min: 0,
     },
-    // Fields related to credit validation - purpose unclear from names alone
-    // Adding comments based on potential interpretations or requiring clarification
-    totalCreditValid: { // e.g., Total valid credits for this exam period/subject
+    gradeTotalCreditPoints: {
       type: Number,
       required: true,
       min: 0,
     },
-    securedValidCredit: { // e.g., Credits secured that are considered valid
+    gradeTotalCreditValid: {
       type: Number,
       required: true,
       min: 0,
     },
-    CVV: { // This name is confusing, purpose needs clarification (e.g., Credit Validity Value?)
-           // Assuming it's a derived numerical value
+    gradeSecuredValidCredit: {
       type: Number,
       required: true,
       min: 0,
     },
-    // The month of the exam (e.g., "April", "December")
-    examMonth: {
+    gradeCVV: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+    gradeExamMonth: {
       type: String,
       required: true,
       trim: true,
-      // lowercase: true // Keep original case or decide standard (e.g., "April")
     },
-    // Timestamps for creation and updates
   },
   {
-    // Mongoose timestamps automatically adds createdAt and updatedAt fields
     timestamps: true,
   }
 );
 
-// Add a compound unique index to prevent duplicate grades for the same student, subject, and exam period
-gradeSchema.index({ student: 1, subject: 1, examYear: 1, examMonth: 1 }, { unique: true });
-
-
-// Create and export the Grade model
 export const Grade = mongoose.model("Grade", gradeSchema);

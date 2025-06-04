@@ -1,107 +1,101 @@
-// src/models/student.model.js
-
 import mongoose from "mongoose";
 
-// Define the schema for the Student model
 const studentSchema = new mongoose.Schema(
   {
-    fullName: {
+    studentFullName: {
       type: String,
       required: [true, "Full name is required"],
-      index: true,
       trim: true,
     },
-    dateOfBirth: {
+    studentDateOfBirth: {
       type: Date,
-      required: true,
+      required: [true, "Date of birth is required"],
     },
-    enrollmentNo: {
+    studentEnrollmentNumber: {
       type: String,
-      required: true,
+      required: [true, "Enrollment number is required"],
       unique: true,
       trim: true,
       uppercase: true,
     },
-    rollNo: {
+    studentRollNumber: {
       type: String,
-      required: true,
+      required: [true, "Roll number is required"],
       unique: true,
       trim: true,
       uppercase: true,
     },
-    email: {
+    studentEmail: {
       type: String,
+      required: [true, "Email is required"],
       unique: true,
-      required: true,
       trim: true,
       lowercase: true,
+      match: [/\S+@\S+\.\S+/, "Please enter a valid email address"],
     },
-    contactInfo: {
+    studentContactNumber: {
       type: String,
+      required: [true, "Contact number is required"],
       unique: true,
-      required: true,
       trim: true,
     },
-    fatherName: {
+    studentFatherName: {
       type: String,
-      required: true,
+      required: [true, "Father's name is required"],
       trim: true,
     },
-    fullAdd: {
-      type: {
-        street: {
-          type: String,
-          trim: true,
-          default: "",
-        },
-        city: {
-          type: String,
-          required: true,
-          trim: true,
-          default: "Jabalpur",
-        },
-        state: {
-          type: String,
-          required: true,
-          default: "Madhya Pradesh",
-          trim: true,
-        },
-        postalCode: {
-          type: String,
-          trim: true,
-          lowercase: true,
-          default: "",
-        },
-        country: {
-          type: String,
-          default: "India",
-          trim: true,
-          uppercase: true,
-        },
+    studentAddress: {
+      street: {
+        type: String,
+        trim: true,
+        default: "",
       },
-      required: true,
+      city: {
+        type: String,
+        required: [true, "City is required"],
+        trim: true,
+        default: "Jabalpur",
+      },
+      state: {
+        type: String,
+        required: [true, "State is required"],
+        trim: true,
+        default: "Madhya Pradesh",
+      },
+      postalCode: {
+        type: String,
+        trim: true,
+        lowercase: true,
+        default: "",
+      },
+      country: {
+        type: String,
+        trim: true,
+        uppercase: true,
+        default: "INDIA",
+      },
     },
-    category: {
+    studentCategory: {
       type: String,
+      required: [true, "Category is required"],
       enum: ["GEN", "OBC", "SC", "ST", "OTHER"],
-      required: true,
       trim: true,
       uppercase: true,
     },
-    currentCourse: {
+    studentCurrentCourseId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Course",
     },
     studentType: {
       type: String,
+      required: [true, "Student type is required"],
       enum: ["Regular", "Private", "International"],
-      required: true,
     },
-    admissionYear: {
+    studentAdmissionYear: {
       type: Number,
-      required: true,
-      min: 1900,
-      default: new Date(),
+      required: [true, "Admission year is required"],
+      min: [1900, "Admission year cannot be before 1900"],
+      default: new Date().getFullYear(),
     },
   },
   {

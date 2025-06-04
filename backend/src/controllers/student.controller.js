@@ -5,154 +5,121 @@ import { Student } from "../models/student.model.js";
 import dayjs from "dayjs";
 import { capitalize } from "../utils/capitalize.js";
 
-// Helper function to populate the currentCourse field
 const populateStudent = (query) => {
-  return query.populate("currentCourse", "courseName");
+  return query.populate({
+    path: "studentCurrentCourseId",
+    select: "courseTitle _id",
+  });
 };
 
-// Controller to add a new student
 const addStudent = asyncHandler(async (req, res) => {
-  try {
-    const {
-      fullName,
-      dateOfBirth,
-      enrollmentNo,
-      rollNo,
-      email,
-      contactInfo,
-      fatherName,
-      fullAdd,
-      category,
-      currentCourse,
-      studentType,
-      admissionYear,
-    } = req.body;
+  const {
+    studentFullName,
+    studentDateOfBirth,
+    studentEnrollmentNumber,
+    studentRollNumber,
+    studentEmail,
+    studentContactNumber,
+    studentFatherName,
+    studentAddress,
+    studentCategory,
+    studentCurrentCourseId,
+    studentType,
+    studentAdmissionYear,
+  } = req.body;
 
-    const requiredFields = [
-      fullName,
-      enrollmentNo,
-      rollNo,
-      email,
-      contactInfo,
-      fatherName,
-    ];
+  const requiredFields = [
+    studentFullName,
+    studentEnrollmentNumber,
+    studentRollNumber,
+    studentEmail,
+    studentContactNumber,
+    studentFatherName,
+  ];
 
-    if (requiredFields.some((field) => field?.trim() == "" || field == null)) {
-      throw new ApiError(400, `All required fields must be filled.`);
-    }
-    console.log("this is from frontend dateof birth", dateOfBirth);
-
-    if ([studentType, category, admissionYear].some((field) => field == null)) {
-      throw new ApiError(400, `All required fields must be filled.`);
-    }
-
-    const dob = dateOfBirth;
-    if (!dayjs(dob).isValid()) {
-      throw new ApiError(400, "Invalid date format for date of birth.");
-    }
-    console.log("date of birth inside controller , using dayjs", dob);
-    const existStudent = await Student.aggregate([
-      {
-        $match: {
-          $expr: {
-            $or: [
-              { $eq: ["$enrollmentNo", enrollmentNo.trim().toUpperCase()] },
-              { $eq: ["$rollNo", rollNo.trim().toUpperCase()] },
-              { $eq: ["$email", email.trim().toLowerCase()] },
-              { $eq: ["$contactInfo", contactInfo.trim()] },
-            ],
-          },
-        },
-      },
-    ]);
-
-    if (existStudent.length > 0) {
-      const match = existStudent[0];
-      let errorMessage = "A student with these details already exists.";
-
-      if (match.enrollmentNo === enrollmentNo.toUpperCase()) {
-        errorMessage = `Student with Enrollment Number '${enrollmentNo
-          .trim()
-          .toUpperCase()}' already exists.`;
-      } else if (match.rollNo === rollNo.toUpperCase()) {
-        errorMessage = `Student with Roll Number '${rollNo
-          .trim()
-          .toUpperCase()}' already exists.`;
-      } else if (match.email === email.toLowerCase()) {
-        errorMessage = `Student with Email '${email
-          .trim()
-          .toLowerCase()}' already exists.`;
-      } else if (match.contactInfo === contactInfo.trim()) {
-        errorMessage = `Student with Contact Info '${contactInfo.trim()}' already exists.`;
-      }
-
-      throw new ApiError(409, errorMessage);
-    }
-    console.log("this is dayjs function before new student object", dayjs(dob));
-
-    console.log("after converting date by dayjs", dob);
-
-    const createdStudent = await Student.create({
-      fullName: capitalize(fullName.trim()),
-      dateOfBirth: dob,
-      enrollmentNo: enrollmentNo.trim().toUpperCase(),
-      rollNo: rollNo.trim().toUpperCase(),
-      email: email.trim().toLowerCase(),
-      contactInfo: contactInfo.trim(),
-      fatherName: capitalize(fatherName.trim()),
-      fullAdd: {
-        street: fullAdd?.street?.trim() || "",
-        city: capitalize(fullAdd?.city?.trim()) || "",
-        state: capitalize(fullAdd?.state?.trim()) || "",
-        postalCode: fullAdd?.postalCode?.trim() || "",
-        country: fullAdd?.country?.trim().toUpperCase() || "INDIA",
-      },
-      category: category || "GEN",
-      currentCourse: currentCourse || null,
-      studentType: studentType || "Regular",
-      admissionYear: admissionYear || new Date().getFullYear(),
-    });
-
-    const student = await Student.aggregate([
-      { $match: { _id: createdStudent._id } },
-      {
-        $lookup: {
-          from: "courses",
-          localField: "currentCourse",
-          foreignField: "_id",
-          as: "currentCourse",
-        },
-      },
-      {
-        $unwind: {
-          path: "$currentCourse",
-          preserveNullAndEmptyArrays: true,
-        },
-      },
-    ]);
-
-    if (!student || student.length === 0) {
-      throw new ApiError(
-        500,
-        "An unexpected error occurred while adding the student."
-      );
-    }
-
-    return res
-      .status(201)
-      .json(
-        new Apiresponse(201, student, "Student has been added successfully.")
-      );
-  } catch (error) {
-    console.log(error, "");
+  if (requiredFields.some((field) => field?.trim() == "" || field == null)) {
+    throw new ApiError(400, `All required fields must be filled.`);
   }
+
+  if ([studentType, studentCategory, studentAdmissionYear].some((field) => field == null)) {
+    throw new ApiError(400, `All required fields must be filled.`);
+  }
+
+  if (!dayjs(studentDateOfBirth).isValid()) {
+    throw new ApiError(400, "Invalid date format for date of birth.");
+  }
+
+  const existStudent = await Student.aggregate([
+    {
+      $match: {
+        $expr: {
+          $or: [
+            { $eq: ["$studentEnrollmentNumber", studentEnrollmentNumber.trim().toUpperCase()] },
+            { $eq: ["$studentRollNumber", studentRollNumber.trim().toUpperCase()] },
+            { $eq: ["$studentEmail", studentEmail.trim().toLowerCase()] },
+            { $eq: ["$studentContactNumber", studentContactNumber.trim()] },
+          ],
+        },
+      },
+    },
+  ]);
+
+  if (existStudent.length > 0) {
+    const match = existStudent[0];
+    let errorMessage = "A student with these details already exists.";
+
+    if (match.studentEnrollmentNumber === studentEnrollmentNumber.toUpperCase()) {
+      errorMessage = `Student with Enrollment Number '${studentEnrollmentNumber.trim().toUpperCase()}' already exists.`;
+    } else if (match.studentRollNumber === studentRollNumber.toUpperCase()) {
+      errorMessage = `Student with Roll Number '${studentRollNumber.trim().toUpperCase()}' already exists.`;
+    } else if (match.studentEmail === studentEmail.toLowerCase()) {
+      errorMessage = `Student with Email '${studentEmail.trim().toLowerCase()}' already exists.`;
+    } else if (match.studentContactNumber === studentContactNumber.trim()) {
+      errorMessage = `Student with Contact Number '${studentContactNumber.trim()}' already exists.`;
+    }
+
+    throw new ApiError(409, errorMessage);
+  }
+
+  const createdStudent = await Student.create({
+    studentFullName: capitalize(studentFullName.trim()),
+    studentDateOfBirth,
+    studentEnrollmentNumber: studentEnrollmentNumber.trim().toUpperCase(),
+    studentRollNumber: studentRollNumber.trim().toUpperCase(),
+    studentEmail: studentEmail.trim().toLowerCase(),
+    studentContactNumber: studentContactNumber.trim(),
+    studentFatherName: capitalize(studentFatherName.trim()),
+    studentAddress: {
+      street: studentAddress?.street?.trim() || "",
+      city: capitalize(studentAddress?.city?.trim()) || "",
+      state: capitalize(studentAddress?.state?.trim()) || "",
+      postalCode: studentAddress?.postalCode?.trim() || "",
+      country: studentAddress?.country?.trim().toUpperCase() || "INDIA",
+    },
+    studentCategory: studentCategory || "GEN",
+    studentCurrentCourseId: studentCurrentCourseId || null,
+    studentType: studentType || "Regular",
+    studentAdmissionYear: studentAdmissionYear || new Date().getFullYear(),
+  });
+
+  const student = await populateStudent(Student.findById(createdStudent._id));
+
+  if (!student || student.length === 0) {
+    throw new ApiError(
+      500,
+      "An unexpected error occurred while adding the student."
+    );
+  }
+
+  return res
+    .status(201)
+    .json(
+      new Apiresponse(201, student, "Student has been added successfully.")
+    );
 });
 
-// Controller to get all students
 const getAllStudents = asyncHandler(async (req, res) => {
-  const filter = {};
-  const allStudents = await populateStudent(Student.find(filter));
-
+  const allStudents = await populateStudent(Student.find({}));
   return res
     .status(200)
     .json(
@@ -160,127 +127,116 @@ const getAllStudents = asyncHandler(async (req, res) => {
     );
 });
 
-// Controller to get a student by ID
 const getStudentById = asyncHandler(async (req, res) => {
   const studentId = req.params.id;
-
   if (!studentId) {
     throw new ApiError(400, "Student ID not provided.");
   }
-
   const student = await populateStudent(Student.findById(studentId));
-
   if (!student) {
     throw new ApiError(404, "Student data not found.");
   }
-
   return res
     .status(200)
     .json(new Apiresponse(200, student, "Student found successfully."));
 });
 
-// Controller to update student details
 const updateStudent = asyncHandler(async (req, res) => {
   const studentId = req.params.id;
-
   if (!studentId) {
     throw new ApiError(400, "Student ID not provided for update.");
   }
 
   const {
-    fullName,
-    dateOfBirth,
-    enrollmentNo,
-    rollNo,
-    email,
-    contactInfo,
-    fatherName,
-    fullAdd,
-    category,
-    currentCourse,
+    studentFullName,
+    studentDateOfBirth,
+    studentEnrollmentNumber,
+    studentRollNumber,
+    studentEmail,
+    studentContactNumber,
+    studentFatherName,
+    studentAddress,
+    studentCategory,
+    studentCurrentCourseId,
     studentType,
-    admissionYear,
+    studentAdmissionYear,
   } = req.body;
 
   if (
     !(
-      fullName ||
-      dateOfBirth ||
-      enrollmentNo ||
-      rollNo ||
-      email ||
-      contactInfo ||
-      fatherName ||
-      fullAdd ||
-      category ||
-      currentCourse ||
+      studentFullName ||
+      studentDateOfBirth ||
+      studentEnrollmentNumber ||
+      studentRollNumber ||
+      studentEmail ||
+      studentContactNumber ||
+      studentFatherName ||
+      studentAddress ||
+      studentCategory ||
+      studentCurrentCourseId ||
       studentType ||
-      admissionYear
+      studentAdmissionYear
     )
   ) {
     throw new ApiError(400, "No valid fields provided for update.");
   }
 
-  if (dateOfBirth !== undefined && !dayjs(dateOfBirth).isValid()) {
+  if (studentDateOfBirth !== undefined && !dayjs(studentDateOfBirth).isValid()) {
     throw new ApiError(400, "Invalid date of birth format.");
   }
 
   if (
-    admissionYear !== undefined &&
-    (typeof admissionYear !== "number" ||
-      admissionYear < 1900 ||
-      admissionYear > new Date().getFullYear() + 1)
+    studentAdmissionYear !== undefined &&
+    (typeof studentAdmissionYear !== "number" ||
+      studentAdmissionYear < 1900 ||
+      studentAdmissionYear > new Date().getFullYear() + 1)
   ) {
     throw new ApiError(400, "Invalid admission year.");
   }
 
   if (
-    fullAdd !== undefined &&
-    (typeof fullAdd !== "object" || fullAdd === null)
+    studentAddress !== undefined &&
+    (typeof studentAddress !== "object" || studentAddress === null)
   ) {
-    throw new ApiError(400, "Full address must be an object.");
+    throw new ApiError(400, "Student address must be an object.");
   }
 
-  const updatedStudent = await Student.findByIdAndUpdate(
-    studentId,
-    {
-      $set: {
-        ...(fullName?.trim() && { fullName: capitalize(fullName.trim()) }),
-        ...(dateOfBirth && { dateOfBirth }),
-        ...(enrollmentNo?.trim() && {
-          enrollmentNo: enrollmentNo.trim().toUpperCase(),
-        }),
-        ...(rollNo?.trim() && { rollNo: rollNo.trim().toUpperCase() }),
-        ...(email?.trim() && { email: email.trim().toLowerCase() }),
-        ...(contactInfo?.trim() && { contactInfo: contactInfo.trim() }),
-        ...(fatherName?.trim() && {
-          fatherName: capitalize(fatherName.trim()),
-        }),
-        ...(fullAdd && {
-          fullAdd: {
-            street: fullAdd.street?.trim().toLowerCase() || "",
-            city: capitalize(fullAdd.city?.trim()) || "",
-            state: capitalize(fullAdd.state?.trim()) || "",
-            postalCode: fullAdd.postalCode?.trim() || "",
-            country: fullAdd.country?.trim().toUpperCase() || "INDIA",
-          },
-        }),
-        ...(category?.trim() && { category }),
-        ...((currentCourse && { currentCourse }) || ""),
-        ...(admissionYear !== undefined && { admissionYear }),
+  const updatedStudent = await populateStudent(
+    Student.findByIdAndUpdate(
+      studentId,
+      {
+        $set: {
+          ...(studentFullName?.trim() && { studentFullName: capitalize(studentFullName.trim()) }),
+          ...(studentDateOfBirth && { studentDateOfBirth }),
+          ...(studentEnrollmentNumber?.trim() && {
+            studentEnrollmentNumber: studentEnrollmentNumber.trim().toUpperCase(),
+          }),
+          ...(studentRollNumber?.trim() && { studentRollNumber: studentRollNumber.trim().toUpperCase() }),
+          ...(studentEmail?.trim() && { studentEmail: studentEmail.trim().toLowerCase() }),
+          ...(studentContactNumber?.trim() && { studentContactNumber: studentContactNumber.trim() }),
+          ...(studentFatherName?.trim() && {
+            studentFatherName: capitalize(studentFatherName.trim()),
+          }),
+          ...(studentAddress && {
+            studentAddress: {
+              street: studentAddress.street?.trim().toLowerCase() || "",
+              city: capitalize(studentAddress.city?.trim()) || "",
+              state: capitalize(studentAddress.state?.trim()) || "",
+              postalCode: studentAddress.postalCode?.trim() || "",
+              country: studentAddress.country?.trim().toUpperCase() || "INDIA",
+            },
+          }),
+          ...(studentCategory?.trim() && { studentCategory }),
+          ...((studentCurrentCourseId && { studentCurrentCourseId }) || ""),
+          ...(studentAdmissionYear !== undefined && { studentAdmissionYear }),
+        },
       },
-    },
-    {
-      new: true,
-      runValidators: true,
-    }
-  ).populate({
-    path: "currentCourse",
-    select: " courseName",
-    options: {
-      sort: { courseName: 1 },
-    },
-  });
+      {
+        new: true,
+        runValidators: true,
+      }
+    )
+  );
 
   if (!updatedStudent) {
     throw new ApiError(404, "Student not found for update.");
@@ -297,36 +253,23 @@ const updateStudent = asyncHandler(async (req, res) => {
     );
 });
 
-// Controller to count total students
 const studentCount = asyncHandler(async (req, res) => {
-  try {
-    const count = await Student.countDocuments();
-    if (!count) throw new ApiError(400, "Failed to fetch student count.");
-    return res
-      .status(200)
-      .json(new Apiresponse(200, count, "Student count fetched successfully."));
-  } catch (error) {
-    console.error("Failed to fetch student count.", error);
-  }
+  const count = await Student.countDocuments();
+  return res
+    .status(200)
+    .json(new Apiresponse(200, count, "Student count fetched successfully."));
 });
 
 const deleteStudent = asyncHandler(async (req, res) => {
-  try {
-    const { id } = req.params;
-    console.log(id);
+  const { id } = req.params;
+  if (!id) throw new ApiError(400, "Id is empty");
 
-    if (!id) throw new ApiError(400, "Id is empty");
+  const student = await populateStudent(Student.findByIdAndDelete(id));
 
-    const student = await Student.findByIdAndDelete(id);
-    console.log("data of student that is going to delete", student);
-
-    if (!student) throw new ApiError(404, "cannot find student");
-    return res
-      .status(200)
-      .json(new Apiresponse(200, student, "student deleted successfully"));
-  } catch (error) {
-    console.log("Cant delete student", error);
-  }
+  if (!student) throw new ApiError(404, "Cannot find student");
+  return res
+    .status(200)
+    .json(new Apiresponse(200, student, "Student deleted successfully"));
 });
 
 export {

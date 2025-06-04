@@ -1,39 +1,47 @@
 const validateStudentForm = (form) => {
+  const errors = {};
   if (
-    !form.fullName ||
-    !form.dateOfBirth ||
-    !form.enrollmentNo ||
-    !form.rollNo ||
-    !form.email ||
-    !form.contactInfo ||
-    !form.fatherName ||
-    !form.category ||
+    !form.studentFullName ||
+    !form.studentDateOfBirth ||
+    !form.studentEnrollmentNumber ||
+    !form.studentRollNumber ||
+    !form.studentEmail ||
+    !form.studentContactNumber ||
+    !form.studentFatherName ||
+    !form.studentCategory ||
     !form.studentType ||
-    !form.admissionYear ||
-    !form.fullAdd?.city ||
-    !form.fullAdd?.state ||
-    !form.fullAdd?.country ||
-    !form.fullAdd?.postalCode
+    !form.studentAdmissionYear ||
+    !form.studentAddress?.city ||
+    !form.studentAddress?.state ||
+    !form.studentAddress?.country ||
+    !form.studentAddress?.postalCode
   ) {
-    return "All fields are required.";
+    errors.allFields = "All fields are required.";
   }
   // Email format check
-  if (!/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(form.email)) {
-    return "Invalid email format.";
+  if (!/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(form.studentEmail)) {
+    errors.emailError = "Invalid email format";
   }
   // Admission year check
   if (
-    isNaN(form.admissionYear) ||
-    form.admissionYear < 1900 ||
-    form.admissionYear > new Date().getFullYear() + 1
+    isNaN(form.studentAdmissionYear) ||
+    form.studentAdmissionYear < 1900 ||
+    form.studentAdmissionYear > new Date().getFullYear() + 1
   ) {
-    return "Invalid admission year.";
+    errors.admissionYearError = "Invalid admission year";
   }
   // Date of birth check
-  if (isNaN(Date.parse(form.dateOfBirth))) {
-    return "Invalid date of birth.";
+  if (isNaN(Date.parse(form.studentDateOfBirth))) {
+    errors.dobError = "Invalid date of birth";
+  } else {
+    const dob = new Date(form.studentDateOfBirth);
+    const year = dob.getFullYear();
+    const currentYear = new Date().getFullYear();
+    if (year < 1980 || year > currentYear) {
+      errors.dobError = `Date of birth must be between 1980 and ${currentYear}`;
+    }
   }
-  return "";
+  return errors;
 };
 
 export default validateStudentForm;

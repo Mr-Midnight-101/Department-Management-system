@@ -1,57 +1,67 @@
 // src/models/course.model.js
 
 import mongoose from "mongoose";
-// Removed unused import
-// import { Student } from "./student.model";
 
-// Define the schema for the Course model
-const courseSchema = new mongoose.Schema({
-  // Unique code for the course
-  courseCode: {
-    type: String,
-    required: true,
-    unique: true, // Added unique constraint
-    trim: true,
-    uppercase: true, // Store in uppercase for consistency
-  },
-  // Full name of the course
-  courseName: {
-    type: String,
-    required: true,
-    unique: true, // Added unique constraint
-    trim: true,
-    // lowercase: true, // Let's keep original casing or decide on one standard
-  },
-  // Academic year the course belongs to (e.g., "2023-2024")
-  academicYear: {
-    type: Number,
-    required: true,
-    trim: true,
-    default:3
-  },
-  // Semester the course is offered in
-  semester: {
-    type: Number,
-    required: true, // Made required based on controller validation logic
-    trim: true,
-    default:6
-    // Ensure consistency with controller/enum if used elsewhere
-  },
-  // Array of subjects included in this course
-  subjects: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Subject", // Reference to the Subject model // Indicates each item in the array must be a valid ObjectId
+const CourseSchema = new mongoose.Schema(
+  {
+    courseCode: {
+      type: String,
+      required: [true, "Course code is required."],
+      unique: true,
+      trim: true,
+      uppercase: true,
+      minlength: [3, "Course code must be at least 3 characters long."],
+      maxlength: [10, "Course code must not exceed 10 characters."],
+      match: [
+        /^[A-Z0-9]+$/,
+        "Course code must contain only uppercase letters (A-Z) and numbers (0-9), no spaces.",
+      ],
     },
-  ],
-  // Total credit points for the course
-  courseCredit: {
-    type: Number,
-    required: true,
-    min: 0, // Added minimum value validation
+    courseTitle: {
+      type: String,
+      required: [true, "Course title is required."],
+      unique: true,
+      trim: true,
+      minlength: [3, "Course title must be at least 3 characters long."],
+      maxlength: [100, "Course title must not exceed 100 characters."],
+      match: [
+        /^[A-Za-z ]+$/,
+        "Name must contain only letters (A-Z, a-z) and spaces.",
+      ],
+    },
+    courseDuration: {
+      type: String, // Expected format: "1 year", "2 years", etc.
+      required: [true, "Course academic year is required."],
+      enum: {
+        values: ["1 year", "2 years", "3 years", "4 years"],
+        message: "Unknown Value.",
+      },
+    },
+    courseTerms: {
+      type: String,
+      required: [true, "Course term (semester) is required."],
+      enum: {
+        values: [
+          "1 semester",
+          "2 semesters",
+          "3 semesters",
+          "4 semesters",
+          "5 semesters",
+          "6 semesters",
+          "7 semesters",
+          "8 semesters",
+        ],
+        message: "Unknown Value.",
+      },
+    },
+    courseCreditUnits: {
+      type: Number,
+      required: [true, "Course credit units are required."],
+      min: [0, "Credit units cannot be negative."],
+      max: [10, "Credit units must not exceed 100."],
+    },
   },
-  // Timestamps for creation and updates
-}, { timestamps: true }); // Use timestamps option
+  { timestamps: true }
+);
 
-// Create and export the Course model
-export const Course = mongoose.model("Course", courseSchema);
+export const Course = mongoose.model("Course", CourseSchema);

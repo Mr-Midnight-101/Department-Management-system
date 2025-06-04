@@ -9,24 +9,13 @@ import { getColorTokens } from "../../theme/theme";
 import {
   Box,
   Typography,
-  IconButton,
   Button,
-  Dialog,
-  DialogTitle,
   DialogContent,
   DialogActions,
   MenuItem,
   TextField,
   useTheme,
 } from "@mui/material";
-import { DataGrid, useGridApiRef } from "@mui/x-data-grid";
-
-//icons
-import PersonAddIcon from "@mui/icons-material/PersonAdd";
-import EditNoteIcon from "@mui/icons-material/EditNote";
-import WidthFullIcon from "@mui/icons-material/WidthFull";
-import CancelIcon from "@mui/icons-material/Cancel";
-import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 
 // Validation function (can be reused for both register and
 import validateStudentForm from "./utils/validateStudentForm.js";
@@ -40,43 +29,26 @@ import {
 } from "../../services/student.js";
 
 //drop down options
-import { categoryOptions, studentTypeOptions } from "./dropDownItems.js";
-
+import { categoryOptions, studentTypeOptions } from "./utils/dropDownItems.js";
+import GridActionButton from "../../components/GridActionButton.jsx";
+import GridHeaderWithAction from "../../components/GridHeaderWithAction.jsx";
+import GridWrapper from "../../components/GridWrapper.jsx";
+import PageSectionWrapper from "../../components/PageSectionWrapper.jsx";
+import FormDialogWrapper from "../../components/FormDialogWrapper.jsx";
+import FormFieldsStack from "../../components/FormFieldsStack.jsx";
+import DeleteConfirmationDialogContent from "../../components/DeleteConfirmationDialogContent.jsx";
 const StudentsPage = () => {
-  //autosize of column
-  const autosizeOptions = {
-    includeOutliers: true,
-  };
-  const apiRef = useGridApiRef();
-
   //theme setup
   const theme = useTheme();
   const colors = getColorTokens(theme.palette.mode);
 
   // Data and dialog state
-  const [students, setStudents] = useState([]);
-  const [selectedStudent, setSelectedStudent] = useState(null);
   const [refreshTable, setRefreshTable] = useState(false);
 
-  // Register dialog state
-  const [isRegisterDialogOpen, setRegisterDialogOpen] = useState(false);
-  const [registerForm, setRegisterForm] = useState({});
-
-  // Update dialog state
-  const [isUpdateDialogOpen, setUpdateDialogOpen] = useState(false);
-
-  // Delete dialog state
-  const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
-
-  // Error and loading state for registration
-  const [registerError, setRegisterError] = useState("");
-  const [registerLoading, setRegisterLoading] = useState(false);
-
-  //  Error and loading state for updation
-  const [updateError, setUpdateError] = useState("");
-  const [updateLoading, setUpdateLoading] = useState(false);
-
-  // Fetch students
+  //!____________________________________________________Fetch students
+  const [isDatafetched, setDatafetched] = useState(false);
+  const [isfetchError, setIsFetchError] = useState(null);
+  const [students, setStudents] = useState([]);
   const fetchStudents = useCallback(async () => {
     try {
       const data = await getStudents();
@@ -84,12 +56,15 @@ const StudentsPage = () => {
         ...student,
         id: student._id || i,
         index: i + 1,
-        city: student.fullAdd?.city || "",
-        state: student.fullAdd?.state || "",
+        ...student.studentAddress,
+        city: student.studentAddress?.city || "",
+        state: student.studentAddress?.state || "",
       }));
+      setDatafetched(true);
       setStudents(mappedRows);
     } catch (error) {
       console.error("Error fetching students:", error);
+      setIsFetchError(error);
     }
   }, []);
 
@@ -97,13 +72,27 @@ const StudentsPage = () => {
     fetchStudents();
   }, [fetchStudents, refreshTable]);
 
-  // Dialog open/close handlers
-  const openRegisterDialog = () => setRegisterDialogOpen(true);
+  // Register Dialog open/close handlers
+  const openRegisterDialog = () => {
+    setRegisterForm({}); // Reset the form fields
+    setRegisterDialogOpen(true);
+  };
   const closeRegisterDialog = () => {
     setRegisterDialogOpen(false);
+    setRegisterError({});
     setRefreshTable((prev) => !prev);
   };
 
+  //!______________________________________________________update student
+  // Update dialog state
+  const [selectedStudent, setSelectedStudent] = useState(null);
+  const [isUpdateDialogOpen, setUpdateDialogOpen] = useState(false);
+
+  //  Error and loading state for updation
+  const [updateError, setUpdateError] = useState("");
+  const [updateLoading, setUpdateLoading] = useState(false);
+
+  // update Dialog open/close handlers
   const openUpdateDialog = (student) => {
     setSelectedStudent(student);
     setUpdateDialogOpen(true);
@@ -113,6 +102,10 @@ const StudentsPage = () => {
     setRefreshTable((prev) => !prev);
   };
 
+  //!______________________________________________________delete student
+  // Delete dialog state
+  const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  // delete Dialog open/close handlers
   const openDeleteDialog = (student) => {
     setSelectedStudent(student);
     setDeleteDialogOpen(true);
@@ -122,12 +115,21 @@ const StudentsPage = () => {
     setRefreshTable((prev) => !prev);
   };
 
-  // CRUD handlers
+  //*_________________________________________________________ CRUD handlers
+
+  //!__________________________________________________________Register student
+  // Register dialog state
+  const [isRegisterDialogOpen, setRegisterDialogOpen] = useState(false);
+  const [registerForm, setRegisterForm] = useState({});
+  // Error and loading state for registration
+  const [registerError, setRegisterError] = useState({});
+  const [registerLoading, setRegisterLoading] = useState(false);
+  // Register Handler
   const handleRegisterStudent = async (formData) => {
-    setRegisterError("");
+    setRegisterError({});
     setRegisterLoading(true);
     const validationMsg = validateStudentForm(formData);
-    if (validationMsg) {
+    if (validationMsg && Object.keys(validationMsg).length > 0) {
       setRegisterError(validationMsg);
       setRegisterLoading(false);
       return;
@@ -142,6 +144,7 @@ const StudentsPage = () => {
         return;
       }
       closeRegisterDialog();
+      setRefreshTable((prev) => !prev);
     } catch (error) {
       setRegisterError(
         error?.response?.data?.message ||
@@ -153,11 +156,12 @@ const StudentsPage = () => {
     }
   };
 
+  // Update Handler
   const handleUpdateStudent = async (student) => {
     setUpdateError("");
     setUpdateLoading(true);
     const validationMsg = validateStudentForm(student);
-    if (validationMsg) {
+    if (validationMsg && Object.keys(validationMsg).length > 0) {
       setUpdateError(validationMsg);
       setUpdateLoading(false);
       return;
@@ -170,6 +174,7 @@ const StudentsPage = () => {
         return;
       }
       closeUpdateDialog();
+      setRefreshTable((prev) => !prev);
     } catch (error) {
       setUpdateError(
         error?.response?.data?.message ||
@@ -181,392 +186,199 @@ const StudentsPage = () => {
     }
   };
 
+  // Delete Handler
   const handleDeleteStudent = async (student) => {
     try {
       const response = await deleteStudent(student);
       if (!response) console.error("Failed to delete student");
       closeDeleteDialog();
+      setRefreshTable((prev) => !prev);
     } catch (error) {
       console.error("Error deleting student:", error);
     }
   };
 
   // DataGrid columns
-  const columns = useMemo(
-    () => [
-      {
-        field: "index",
-        headerName: "S. No.",
-        headerAlign: "center",
-        align: "left",
-        width: 60,
-        maxWidth: 100,
+  const columns = [
+    {
+      field: "index",
+      headerName: "S. No.",
+      headerAlign: "center",
+      align: "left",
+      width: 60,
+      maxWidth: 100,
+    },
+    {
+      field: "studentFullName",
+      headerName: "Full Name",
+      headerAlign: "center",
+      align: "left",
+      width: 100,
+      maxWidth: 140,
+    },
+    {
+      field: "studentDateOfBirth",
+      headerName: "DOB",
+      headerAlign: "center",
+      align: "left",
+      Width: 120,
+      maxWidth: 120,
+    },
+    {
+      field: "studentEnrollmentNumber",
+      headerName: "Enrollment No.",
+      headerAlign: "center",
+      align: "left",
+      width: 160,
+      maxWidth: 180,
+    },
+    {
+      field: "studentRollNumber",
+      headerName: "Roll No.",
+      headerAlign: "center",
+      align: "left",
+      maxWidth: 180,
+      Width: 160,
+    },
+    {
+      field: "studentEmail",
+      headerName: "Email",
+      headerAlign: "center",
+      align: "left",
+      maxWidth: 160,
+      Width: 160,
+    },
+    {
+      field: "studentContactNumber",
+      headerName: "Contact No.",
+      headerAlign: "center",
+      align: "left",
+      maxWidth: 160,
+      Width: 160,
+    },
+    {
+      field: "studentFatherName",
+      headerName: "Father's Name",
+      headerAlign: "center",
+      align: "left",
+      maxWidth: 180,
+    },
+    {
+      field: "city",
+      headerName: "City",
+      headerAlign: "center",
+      align: "left",
+      maxWidth: 120,
+    },
+    {
+      field: "state",
+      headerName: "State",
+      headerAlign: "center",
+      align: "left",
+      maxWidth: 120,
+    },
+    // {
+    //   field: "country",
+    //   headerName: "Country",
+    //   headerAlign: "center",
+    //   align: "left",
+    //   maxWidth: 120,
+    // },
+    // {
+    //   field: "postalCode",
+    //   headerName: "Postal Code",
+    //   headerAlign: "center",
+    //   align: "left",
+    //   maxWidth: 120,
+    // },
+    {
+      field: "studentCategory",
+      headerName: "Category",
+      headerAlign: "center",
+      align: "left",
+      maxWidth: 140,
+    },
+    {
+      field: "studentType",
+      headerName: "Type",
+      headerAlign: "center",
+      align: "left",
+      maxWidth: 140,
+    },
+    {
+      field: "studentAdmissionYear",
+      headerName: "Admission Year",
+      headerAlign: "center",
+      align: "center",
+      maxWidth: 80,
+      width: 60,
+      marginLeft: 2,
+    },
+    {
+      field: "action",
+      headerName: "Actions",
+      headerAlign: "center",
+      align: "center",
+      minWidth: 140,
+      maxWidth: 180,
+      renderCell: (params) => {
+        const selectedRow = params.row;
+        return (
+          <GridActionButton
+            openUpdateDialog={() => openUpdateDialog(selectedRow)}
+            openDeleteDialog={() => openDeleteDialog(selectedRow)}
+            selectedRow={selectedRow}
+          />
+        );
       },
-      {
-        field: "fullName",
-        headerName: "Full Name",
-        headerAlign: "center",
-        align: "left",
-        width: 100,
-        maxWidth: 140,
-      },
-      {
-        field: "dateOfBirth",
-        headerName: "DOB",
-        headerAlign: "center",
-        align: "left",
-        Width: 120,
-        maxWidth: 120,
-      },
-      {
-        field: "enrollmentNo",
-        headerName: "Enrollment No.",
-        headerAlign: "center",
-        align: "left",
-        width: 160,
-        maxWidth: 180,
-      },
-      {
-        field: "rollNo",
-        headerName: "Roll No.",
-        headerAlign: "center",
-        align: "left",
-        maxWidth: 180,
-        Width: 160,
-      },
-      {
-        field: "email",
-        headerName: "Email ID",
-        headerAlign: "center",
-        align: "left",
-        maxWidth: 160,
-        Width: 160,
-      },
-      {
-        field: "contactInfo",
-        headerName: "Contact No.",
-        headerAlign: "center",
-        align: "left",
-        maxWidth: 160,
-        Width: 160,
-      },
-      {
-        field: "fatherName",
-        headerName: "Father's Name",
-        headerAlign: "center",
-        align: "left",
-        maxWidth: 180,
-      },
-      {
-        field: "city",
-        headerName: "City",
-        headerAlign: "center",
-        align: "left",
-        maxWidth: 120,
-      },
-      {
-        field: "state",
-        headerName: "State",
-        headerAlign: "center",
-        align: "left",
-        maxWidth: 120,
-      },
-      {
-        field: "category",
-        headerName: "Category",
-        headerAlign: "center",
-        align: "left",
-        maxWidth: 140,
-      },
-      {
-        field: "studentType",
-        headerName: "Type",
-        headerAlign: "center",
-        align: "left",
-        maxWidth: 140,
-      },
-      {
-        field: "admissionYear",
-        headerName: "Admission",
-        headerAlign: "center",
-        align: "center",
-        maxWidth: 80,
-        width: 60,
-        marginLeft: 2,
-      },
-      {
-        field: "action",
-        headerName: "Actions",
-        headerAlign: "center",
-        align: "center",
-        minWidth: 140,
-        maxWidth: 180,
-        renderCell: (params) => {
-          const selectedRow = params.row;
-          return (
-            <Box
-              display="flex"
-              justifyContent="space-evenly"
-              alignItems="center"
-              sx={{ m: 1 }}
-            >
-              <IconButton
-                onClick={() => openUpdateDialog(selectedRow)}
-                sx={{
-                  borderRadius: 1,
-                  backgroundColor: colors.blue[100],
-                  color: colors.text[100],
-                }}
-                aria-label="edit"
-              >
-                <EditNoteIcon />
-              </IconButton>
-              <IconButton
-                onClick={() => openDeleteDialog(selectedRow)}
-                sx={{
-                  borderRadius: 1,
-                  backgroundColor: colors.red[100],
-                  color: colors.text[100],
-                }}
-                aria-label="delete"
-              >
-                <DeleteOutlineIcon />
-              </IconButton>
-            </Box>
-          );
-        },
-      },
-    ],
-    [colors]
-  );
+    },
+  ];
 
   return (
     <Box width="100%">
-      {/* Header and Add Student Button */}
-      <Box
-        sx={{
-          flex: 1,
-          m: { xs: 2, md: 2 },
-          mr: { xs: 12, md: 12, lg: 12, xl: 2 },
-        }}
-      >
-        <Box
-          display="flex"
-          justifyContent="space-between"
-          sx={{
-            gap: 1,
-            my: 2,
-            mr: 0,
-            alignItems: { xs: "flex-start", sm: "center" },
-            flexDirection: { xs: "column", sm: "row" },
-          }}
-        >
-          <Typography
-            sx={{
-              fontSize: { xs: "1.6rem", sm: "2rem" },
-              color: colors.grey[800],
-            }}
-          >
-            {"Student Table"}
-          </Typography>
-
-          <IconButton
-            onClick={openRegisterDialog}
-            sx={{
-              gap: 1,
-              display: "flex",
-              alignItems: "center",
-              borderRadius: 1,
-              background: colors.primary[900],
-              backgroundPosition: "center",
-              color: colors.text[100],
-              "&:hover": {
-                background: colors.gradient[100],
-              },
-            }}
-          >
-            <PersonAddIcon />
-            <Typography
-              variant="h5"
-              sx={{
-                lineHeight: 1,
-                fontWeight: { xs: 200, sm: 400 },
-                color: colors.text[100],
-              }}
-            >
-              {"Add Student"}
-            </Typography>
-          </IconButton>
-        </Box>
+      <PageSectionWrapper>
+        {/* Header and Add Student Button */}
+        <GridHeaderWithAction
+          pageTitle={"Student Enrollment Records"}
+          onButtonClick={openRegisterDialog}
+          buttonLabel={"Add Student"}
+        />
 
         {/* DataGrid */}
-        <Box
-          maxHeight="60vh"
-          maxWidth="100%"
-          m="24px 0"
-          sx={{
-            "& .MuiDataGrid-filler": {
-              background: `${colors.primary[900]} !important`,
-            },
-            "& .MuiDataGrid-root": {
-              border: "none",
-              background: `${colors.primary[900]} !important`,
-              color: `${colors.text[100]} !important`,
-            },
-            "& .MuiDataGrid-row:hover": {
-              backgroundColor: `${colors.clay[100]} !important`,
-            },
-            "& .MuiDataGrid-row": {
-              background: `${colors.primary[900]} !important`,
-              "&.Mui-selected": {
-                backgroundColor: `${colors.pink[100]} !important`,
-                "&:hover": {
-                  backgroundColor: `${colors.ArtyClick[100]} !important`,
-                },
-              },
-            },
-            "& .MuiDataGrid-cell": {
-              borderBottom: "none",
-              fontSize: "0.9rem",
-            },
-            "& .MuiDataGrid-columnHeader": {
-              borderBottom: "none",
-              background: `${colors.primary[900]} !important`,
-            },
-            "& .MuiDataGrid-virtualScroller": {
-              backgroundColor: `${colors.grey[100]} !important`,
-            },
-            "& .MuiDataGrid-footerContainer": {
-              borderTop: "none",
-              backgroundColor: `${colors.primary[900]} !important`,
-            },
-            "& .MuiDataGrid-cell:hover": {
-              cursor: "pointer",
-            },
-            mr: { xl: 0 },
-          }}
-        >
-          <DataGrid
-            sx={{
-              maxHeight: "60vh",
-              maxWidth: "100vw",
-              width: "100%",
-            }}
-            rowBufferPx={10}
-            slotProps={{
-              loadingOverlay: {
-                variant: "skeleton",
-                noRowsVariant: "skeleton",
-              },
-            }}
-            apiRef={apiRef}
-            autosizeOptions={autosizeOptions}
-            disableColumnResize
-            disableColumnSelector
-            columns={columns}
-            rows={students}
-          />
-        </Box>
-        <Box display="flex" justifyContent="flex-end" m="4px  0">
-          <IconButton
-            onClick={() => apiRef.current?.autosizeColumns(autosizeOptions)}
-            sx={{
-              gap: 1,
-              display: "flex",
-              alignItems: "center",
-              borderRadius: 1,
-              background: colors.primary[900],
-              backgroundPosition: "center",
-              color: colors.text[100],
-              "&:hover": {
-                background: colors.gradient[100],
-              },
-            }}
-          >
-            <WidthFullIcon />
-            <Typography
-              variant="h5"
-              sx={{
-                lineHeight: 1,
-                fontWeight: { xs: 200, sm: 400 },
-                color: colors.text[100],
-              }}
-            >
-              Re-size Column
-            </Typography>
-          </IconButton>
-        </Box>
-      </Box>
-
+        <GridWrapper
+          isDatafetched={isDatafetched}
+          rows={students}
+          columns={columns}
+        />
+      </PageSectionWrapper>
       {/* Register Dialog */}
       <Box>
         {isRegisterDialogOpen && (
-          <Box
-            sx={{
-              "& .MuiTextField-input:focus": {},
-            }}
-          >
-            <Dialog
-              open={isRegisterDialogOpen}
-              onClose={closeRegisterDialog}
-              scroll="paper"
-              maxWidth="lg"
-              slotProps={{
-                paper: {
-                  sx: {
-                    width: { xs: "80vw", sm: "40vw", md: "40vw" },
-                    height: { xs: "80vh", sm: "70vh", md: "60vh" },
-                    p: 2,
-                  },
-                },
-              }}
+          <Box>
+            <FormDialogWrapper
+              isDialogOpen={isRegisterDialogOpen}
+              closeDialog={closeRegisterDialog}
+              dialogHeading={"Register Student"}
             >
-              {/* heading and close button */}
-              <Box
-                display="flex"
-                justifyContent="center"
-                alignItems="center"
-                flexDirection="column"
-              >
-                <Box
-                  display="flex"
-                  width="100%"
-                  justifyContent="flex-end"
-                  alignItems="center"
-                >
-                  <IconButton sx={{}} onClick={closeRegisterDialog}>
-                    <CancelIcon sx={{ fontSize: "34px" }} />
-                  </IconButton>
-                </Box>
-                <Box>
-                  <Typography variant="h3">Register Student</Typography>
-                </Box>
-              </Box>
               <DialogContent>
                 {/* Error message */}
                 {registerError && (
                   <Box mb={2}>
                     <Typography color="error" variant="body2">
-                      {registerError}
+                      {registerError?.allFields}
                     </Typography>
                   </Box>
                 )}
-                <Box
-                  display="flex"
-                  flexDirection="column"
-                  gap="12px"
-                  sx={{
-                    flex: 1,
-                    mt: 1,
-                  }}
-                >
+                <FormFieldsStack>
                   <TextField
                     size="medium"
                     label="Full Name"
                     required
+                    error={!!registerError?.nameError}
+                    helperText={registerError?.nameError}
                     variant="outlined"
-                    name="fullName"
-                    value={registerForm.fullName || ""}
+                    name="studentFullName"
+                    value={registerForm?.studentFullName || ""}
                     onChange={(e) =>
                       setRegisterForm({
                         ...registerForm,
@@ -579,12 +391,14 @@ const StudentsPage = () => {
                     label="Date of birth"
                     type="date"
                     required
+                    error={!!registerError?.dobError}
+                    helperText={registerError?.dobError}
                     variant="outlined"
                     InputLabelProps={{
                       shrink: true, // still valid and needed
                     }}
-                    name="dateOfBirth"
-                    value={registerForm.dateOfBirth || ""}
+                    name="studentDateOfBirth"
+                    value={registerForm.studentDateOfBirth || ""}
                     onChange={(e) =>
                       setRegisterForm({
                         ...registerForm,
@@ -596,9 +410,11 @@ const StudentsPage = () => {
                     size="medium"
                     label="Enrollment No."
                     required
+                    error={!!registerError?.enrollError}
+                    helperText={registerError?.enrollError}
                     variant="outlined"
-                    name="enrollmentNo"
-                    value={registerForm.enrollmentNo || ""}
+                    name="studentEnrollmentNumber"
+                    value={registerForm.studentEnrollmentNumber || ""}
                     onChange={(e) =>
                       setRegisterForm({
                         ...registerForm,
@@ -610,9 +426,11 @@ const StudentsPage = () => {
                     size="medium"
                     label="Roll No."
                     required
+                    error={!!registerError?.rollError}
+                    helperText={registerError?.rollError}
                     variant="outlined"
-                    name="rollNo"
-                    value={registerForm.rollNo || ""}
+                    name="studentRollNumber"
+                    value={registerForm.studentRollNumber || ""}
                     onChange={(e) =>
                       setRegisterForm({
                         ...registerForm,
@@ -625,9 +443,11 @@ const StudentsPage = () => {
                     type="email"
                     label="Email ID"
                     required
+                    error={!!registerError?.emailError}
+                    helperText={registerError?.emailError}
                     variant="outlined"
-                    name="email"
-                    value={registerForm.email || ""}
+                    name="studentEmail"
+                    value={registerForm.studentEmail || ""}
                     onChange={(e) =>
                       setRegisterForm({
                         ...registerForm,
@@ -639,9 +459,11 @@ const StudentsPage = () => {
                     size="medium"
                     label="Contact"
                     required
+                    error={!!registerError?.contactError}
+                    helperText={registerError?.contactError}
                     variant="outlined"
-                    name="contactInfo"
-                    value={registerForm.contactInfo || ""}
+                    name="studentContactNumber"
+                    value={registerForm.studentContactNumber || ""}
                     onChange={(e) =>
                       setRegisterForm({
                         ...registerForm,
@@ -652,10 +474,12 @@ const StudentsPage = () => {
                   <TextField
                     size="medium"
                     label="Father's Name"
+                    error={!!registerError?.fnameError}
+                    helperText={registerError?.fnameError}
                     required
                     variant="outlined"
-                    name="fatherName"
-                    value={registerForm.fatherName || ""}
+                    name="studentFatherName"
+                    value={registerForm.studentFatherName || ""}
                     onChange={(e) =>
                       setRegisterForm({
                         ...registerForm,
@@ -668,6 +492,8 @@ const StudentsPage = () => {
                     label="City"
                     required
                     variant="outlined"
+                    error={!!registerError?.cityError}
+                    helperText={registerError?.cityError}
                     name="city"
                     value={registerForm?.fullAdd?.city || ""}
                     onChange={(e) =>
@@ -684,6 +510,8 @@ const StudentsPage = () => {
                     size="medium"
                     label="State"
                     required
+                    error={!!registerError?.stateError}
+                    helperText={registerError?.stateError}
                     variant="outlined"
                     name="state"
                     value={registerForm?.fullAdd?.state || ""}
@@ -702,6 +530,8 @@ const StudentsPage = () => {
                     label="Country"
                     required
                     variant="outlined"
+                    error={!!registerError?.countryError}
+                    helperText={registerError?.countryError}
                     name="country"
                     value={registerForm?.fullAdd?.country || ""}
                     onChange={(e) =>
@@ -720,6 +550,8 @@ const StudentsPage = () => {
                     required
                     select
                     variant="outlined"
+                    error={!!registerError?.categoryErro}
+                    helperText={registerError?.categoryErro}
                     name="category"
                     value={registerForm.category || ""}
                     onChange={(e) =>
@@ -740,6 +572,8 @@ const StudentsPage = () => {
                     size="medium"
                     label="Student Type"
                     required
+                    error={!!registerError?.studentTypeError}
+                    helperText={registerError?.studentTypeError}
                     select
                     variant="outlined"
                     name="studentType"
@@ -761,6 +595,8 @@ const StudentsPage = () => {
                     size="medium"
                     label="Admission Year"
                     required
+                    error={!!registerError?.admissionYearError}
+                    helperText={registerError?.admissionYearError}
                     variant="outlined"
                     name="admissionYear"
                     value={registerForm.admissionYear || ""}
@@ -776,6 +612,8 @@ const StudentsPage = () => {
                     size="medium"
                     label="Postal Code"
                     variant="outlined"
+                    error={!!registerError?.postalCodeError}
+                    helperText={registerError?.postalCodeError}
                     name="postalCode"
                     onChange={(e) =>
                       setRegisterForm({
@@ -787,7 +625,7 @@ const StudentsPage = () => {
                       })
                     }
                   />
-                </Box>
+                </FormFieldsStack>
               </DialogContent>
               <Box display="flex" justifyContent="center">
                 <DialogActions
@@ -811,7 +649,7 @@ const StudentsPage = () => {
                   </Button>
                 </DialogActions>
               </Box>
-            </Dialog>
+            </FormDialogWrapper>
           </Box>
         )}
       </Box>
@@ -819,61 +657,21 @@ const StudentsPage = () => {
       {/* Update Dialog */}
       <Box>
         {isUpdateDialogOpen && selectedStudent && (
-          <Dialog
-            open={isUpdateDialogOpen}
-            onClose={closeUpdateDialog}
-            scroll="paper"
-            maxWidth="lg"
-            slotProps={{
-              paper: {
-                sx: {
-                  width: { xs: "80vw", sm: "40vw", md: "40vw" },
-                  height: { xs: "80vh", sm: "70vh", md: "60vh" },
-                  p: 2,
-                },
-              },
-            }}
+          <FormDialogWrapper
+            isDialogOpen={isUpdateDialogOpen}
+            closeDialog={closeUpdateDialog}
+            dialogHeading={"Update student"}
           >
-            <DialogTitle>
-              <Box
-                display="flex"
-                justifyContent="center"
-                alignItems="center"
-                flexDirection="column"
-              >
-                <Box
-                  display="flex"
-                  width="100%"
-                  justifyContent="flex-end"
-                  alignItems="center"
-                >
-                  <IconButton sx={{}} onClick={closeUpdateDialog}>
-                    <CancelIcon sx={{ fontSize: "34px" }} />
-                  </IconButton>
-                </Box>
-                <Box>
-                  <Typography variant="h3">Update Student Details</Typography>
-                </Box>
-              </Box>
-            </DialogTitle>
             <DialogContent>
               {/* Error message */}
               {updateError && (
                 <Box mb={2}>
-                  <Typography color="error" variant="body2">
+                  <Typography color="error" variant="h6">
                     {updateError}
                   </Typography>
                 </Box>
               )}
-              <Box
-                display="flex"
-                flexDirection="column"
-                gap="12px"
-                sx={{
-                  flex: 1,
-                  mt: 1,
-                }}
-              >
+              <FormFieldsStack>
                 <TextField
                   label="Full Name"
                   name="fullName"
@@ -1058,7 +856,7 @@ const StudentsPage = () => {
                     }))
                   }
                 />
-              </Box>
+              </FormFieldsStack>
             </DialogContent>
             <DialogActions
               sx={{
@@ -1084,47 +882,33 @@ const StudentsPage = () => {
                 </Button>
               </Box>
             </DialogActions>
-          </Dialog>
+          </FormDialogWrapper>
         )}
       </Box>
 
       {/* Delete Dialog */}
       <Box>
         {isDeleteDialogOpen && selectedStudent && (
-          <Dialog open={isDeleteDialogOpen} onClose={closeDeleteDialog}>
-            <DialogContent>
-              <Typography variant="h6" gutterBottom>
-                Are you sure you want to delete data of{" "}
-                {selectedStudent?.fullName}?
-              </Typography>
-              <Typography variant="body2" color="textSecondary">
-                This action cannot be undone.
-              </Typography>
-
-              <Box display="flex" justifyContent="flex-end" mt={2}>
-                <Button
-                  onClick={closeDeleteDialog}
-                  color="primary"
-                  variant="filled"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={() => {
-                    handleDeleteStudent(selectedStudent);
-                    closeDeleteDialog();
-                  }}
-                  color="error"
-                  variant="contained"
-                  style={{ marginLeft: 8 }}
-                >
-                  Delete
-                </Button>
-              </Box>
-            </DialogContent>
-          </Dialog>
+          <FormDialogWrapper
+            sx={{
+              height: "32vh",
+            }}
+            isDialogOpen={isDeleteDialogOpen}
+            closeDialog={closeDeleteDialog}
+            dialogHeading={"Remove student"}
+          >
+            <DeleteConfirmationDialogContent
+              onConfirm={() => {
+                handleDeleteStudent(selectedStudent);
+                closeDeleteDialog();
+              }}
+              onCancel={() => closeDeleteDialog}
+              entityName={selectedStudent?.fullName}
+            />
+          </FormDialogWrapper>
         )}
       </Box>
+      <Box>{isfetchError !== null && <Box>{isfetchError}</Box>}</Box>
     </Box>
   );
 };

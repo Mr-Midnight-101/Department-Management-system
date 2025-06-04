@@ -1,21 +1,51 @@
 import axios from "axios";
 
+// Get subject count
 const subjectCount = async () => {
-  try {
-    const response = await axios.get("/api/subjects/count");
-    return response.data;
-  } catch (error) {
-    console.log(error);
-  }
+  const response = await axios.get("/api/subjects/count");
+  return response.data;
 };
 
-const subjectData = async () => {
-  try {
-    const response = await axios.get("/api/subjects/get-subjects");
-    const output = response.data.data;
-    return output;
-  } catch (error) {
-    console.log(error);
-  }
+// Get all subjects
+const getSubjects = async () => {
+  const response = await axios.get("/api/subjects/");
+  return response.data.data;
 };
-export { subjectCount, subjectData };
+
+// Add a new subject
+const addSubject = async (subjectData) => {
+  const subject = {
+    ...subjectData,
+    subjectCode: subjectData?.subjectCode,
+    subjectName: subjectData?.subjectName,
+    subjectMaxMarksTheory: subjectData?.subjectMaxMarksTheory,
+    subjectMaxMarksPractical: subjectData?.subjectMaxMarksPractical,
+    subjectCreditPoints: subjectData?.subjectCreditPoints,
+  };
+  const response = await axios.post("/api/subjects/", subject);
+  return response.data;
+};
+
+// Update a subject
+const updateSubject = async (id, subjectData) => {
+  const subject = {
+    ...subjectData,
+
+    subjectCode: subjectData?.subjectCode,
+    subjectName: subjectData?.subjectName,
+    subjectMaxMarksTheory: subjectData?.subjectMaxMarksTheory,
+    subjectMaxMarksPractical: subjectData?.subjectMaxMarksPractical,
+    subjectCreditPoints: subjectData?.subjectCreditPoints,
+  };
+  const { _id, ...data } = subject;
+  const response = await axios.patch(`/api/subjects/${id}`, data);
+  return response.data;
+};
+
+// Delete a subject
+const deleteSubject = async (id) => {
+  const response = await axios.delete(`/api/subjects/${id}`);
+  return response.data;
+};
+
+export { subjectCount, getSubjects, addSubject, updateSubject, deleteSubject };

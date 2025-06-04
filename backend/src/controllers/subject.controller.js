@@ -4,27 +4,29 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import ApiError from "../utils/ApiError.js";
 import Apiresponse from "../utils/Apiresponse.js";
 import { Subject } from "../models/subject.model.js";
-import mongoose from "mongoose";
 import { capitalize } from "../utils/capitalize.js";
 
-// Add a new subject
+const populateSubject = (query) => {
+  return query.populate({ path: "subjectTeachers", select: "teacherFullName _id" });
+};
+
 const addSubject = asyncHandler(async (req, res) => {
   let {
     subjectCode,
     subjectName,
-    maxMarksTheory,
-    maxMarksPractical,
-    subCredit,
-    subjectTeacher,
+    subjectMaxMarksTheory,
+    subjectMaxMarksPractical,
+    subjectCreditPoints,
+    subjectTeachers,
   } = req.body;
 
   if (
     [
       subjectCode,
       subjectName,
-      maxMarksTheory,
-      maxMarksPractical,
-      subCredit,
+      subjectMaxMarksTheory,
+      subjectMaxMarksPractical,
+      subjectCreditPoints,
     ].some(
       (field) =>
         field === undefined ||
@@ -35,17 +37,17 @@ const addSubject = asyncHandler(async (req, res) => {
     throw new ApiError(400, "One or more required fields are missing.");
   }
 
-  if (typeof maxMarksTheory !== "number" || maxMarksTheory < 0) {
+  if (typeof subjectMaxMarksTheory !== "number" || subjectMaxMarksTheory < 0) {
     throw new ApiError(400, "Invalid value for theory marks.");
   }
-  if (typeof maxMarksPractical !== "number" || maxMarksPractical < 0) {
+  if (typeof subjectMaxMarksPractical !== "number" || subjectMaxMarksPractical < 0) {
     throw new ApiError(400, "Invalid value for practical marks.");
   }
-  if (typeof subCredit !== "number" || subCredit < 0) {
-    throw new ApiError(400, "Invalid value for subject credit.");
+  if (typeof subjectCreditPoints !== "number" || subjectCreditPoints < 0) {
+    throw new ApiError(400, "Invalid value for subject credit points.");
   }
-
-  if (subjectTeacher !== undefined && !Array.isArray(subjectTeacher)) {
+//todo add teachers as well in future..⭐
+  if (subjectTeachers !== undefined && !Array.isArray(subjectTeachers)) {
     throw new ApiError(400, "Subject teachers must be provided as an array.");
   }
 
@@ -67,24 +69,13 @@ const addSubject = asyncHandler(async (req, res) => {
   const subject = await Subject.create({
     subjectCode,
     subjectName,
-    maxMarksTheory,
-    maxMarksPractical,
-    subCredit,
-    subjectTeacher: subjectTeacher || [],
+    subjectMaxMarksTheory,
+    subjectMaxMarksPractical,
+    subjectCreditPoints,
+    subjectTeachers: subjectTeachers || [],
   });
 
-  const createdSubject = await Subject.aggregate([
-    { $match: { _id: subject._id } },
-    {
-      $lookup: {
-        from: "teachers",
-        localField: "subjectTeacher",
-        foreignField: "_id",
-        as: "subjectTeacher",
-      },
-    },
-    { $unwind: { path: "$subjectTeacher", preserveNullAndEmptyArrays: true } },
-  ]);
+  const createdSubject = await populateSubject(Subject.findById(subject._id));
 
   if (!createdSubject) {
     throw new ApiError(500, "Something went wrong while adding the subject.");
@@ -95,33 +86,23 @@ const addSubject = asyncHandler(async (req, res) => {
     .json(new Apiresponse(201, createdSubject, "Subject added successfully."));
 });
 
-// Get all subjects
 const getAllSubjects = asyncHandler(async (req, res) => {
-  const allSubjects = await Subject.aggregate([
-    {
-      $lookup: {
-        from: "teachers",
-        localField: "subjectTeacher",
-        foreignField: "_id",
-        as: "subjectTeacher",
-      },
-    },
-    { $unwind: { path: "$subjectTeacher", preserveNullAndEmptyArrays: true } },
-  ]);
-
-  if (!allSubjects || allSubjects.length === 0) {
-    return res.status(200).json(new Apiresponse(200, [], "No subjects found."));
-  }
-
+  const allSubjects = await populateSubject(Subject.find({}));
   return res
     .status(200)
-    .json(new Apiresponse(200, allSubjects, "Subjects fetched successfully."));
+    .json(
+      new Apiresponse(
+        200,
+        allSubjects,
+        allSubjects.length === 0
+          ? "No subjects found."
+          : "Subjects fetched successfully."
+      )
+    );
 });
 
-// Update subject by ID
 const updateSubject = asyncHandler(async (req, res) => {
   const subjectId = req.params.id;
-
   if (!subjectId) {
     throw new ApiError(400, "Subject ID not provided for update.");
   }
@@ -129,75 +110,71 @@ const updateSubject = asyncHandler(async (req, res) => {
   let {
     subjectCode,
     subjectName,
-    maxMarksTheory,
-    maxMarksPractical,
-    subCredit,
-    subjectTeacher,
+    subjectMaxMarksTheory,
+    subjectMaxMarksPractical,
+    subjectCreditPoints,
+    subjectTeachers,
   } = req.body;
 
   if (
     !(
       subjectCode ||
       subjectName ||
-      maxMarksTheory !== undefined ||
-      maxMarksPractical !== undefined ||
-      subCredit !== undefined ||
-      subjectTeacher !== undefined
+      subjectMaxMarksTheory !== undefined ||
+      subjectMaxMarksPractical !== undefined ||
+      subjectCreditPoints !== undefined ||
+      subjectTeachers !== undefined
     )
   ) {
     throw new ApiError(400, "No valid fields provided for update.");
   }
 
   if (
-    maxMarksTheory !== undefined &&
-    (typeof maxMarksTheory !== "number" || maxMarksTheory < 0)
+    subjectMaxMarksTheory !== undefined &&
+    (typeof subjectMaxMarksTheory !== "number" || subjectMaxMarksTheory < 0)
   ) {
     throw new ApiError(400, "Invalid value for theory marks.");
   }
   if (
-    maxMarksPractical !== undefined &&
-    (typeof maxMarksPractical !== "number" || maxMarksPractical < 0)
+    subjectMaxMarksPractical !== undefined &&
+    (typeof subjectMaxMarksPractical !== "number" || subjectMaxMarksPractical < 0)
   ) {
     throw new ApiError(400, "Invalid value for practical marks.");
   }
   if (
-    subCredit !== undefined &&
-    (typeof subCredit !== "number" || subCredit < 0)
+    subjectCreditPoints !== undefined &&
+    (typeof subjectCreditPoints !== "number" || subjectCreditPoints < 0)
   ) {
-    throw new ApiError(400, "Invalid value for subject credit.");
+    throw new ApiError(400, "Invalid value for subject credit points.");
   }
-  if (subjectTeacher !== undefined && !Array.isArray(subjectTeacher)) {
+  if (subjectTeachers !== undefined && !Array.isArray(subjectTeachers)) {
     throw new ApiError(400, "Subject teachers must be an array.");
   }
 
   if (subjectCode) subjectCode = subjectCode.trim().toUpperCase();
   if (subjectName) subjectName = capitalize(subjectName.trim());
 
-  const updatedSubject = await Subject.findByIdAndUpdate(
-    subjectId,
-    {
-      $set: {
-        ...(subjectCode && { subjectCode }),
-        ...(subjectName && { subjectName }),
-        ...(maxMarksTheory !== undefined && { maxMarksTheory }),
-        ...(maxMarksPractical !== undefined && { maxMarksPractical }),
-        ...(subCredit !== undefined && { subCredit }),
-        ...(subjectTeacher !== undefined && {
-          subjectTeacher: subjectTeacher || [],
-        }),
+  const updatedSubject = await populateSubject(
+    Subject.findByIdAndUpdate(
+      subjectId,
+      {
+        $set: {
+          ...(subjectCode && { subjectCode }),
+          ...(subjectName && { subjectName }),
+          ...(subjectMaxMarksTheory !== undefined && { subjectMaxMarksTheory }),
+          ...(subjectMaxMarksPractical !== undefined && { subjectMaxMarksPractical }),
+          ...(subjectCreditPoints !== undefined && { subjectCreditPoints }),
+          ...(subjectTeachers !== undefined && {
+            subjectTeachers: subjectTeachers || [],
+          }),
+        },
       },
-    },
-    {
-      new: true,
-      runValidators: true,
-    }
-  ).populate({
-    path: "subjectTeacher",
-    select: "fullName teacherId",
-    options: {
-      sort: "fullName",
-    },
-  });
+      {
+        new: true,
+        runValidators: true,
+      }
+    )
+  );
 
   if (!updatedSubject) {
     throw new ApiError(404, "Subject not found for update.");
@@ -210,4 +187,29 @@ const updateSubject = asyncHandler(async (req, res) => {
     );
 });
 
-export { addSubject, getAllSubjects, updateSubject };
+const deleteSubject = asyncHandler(async (req, res) => {
+  const subjectId = req.params.id;
+  if (!subjectId) {
+    throw new ApiError(400, "Subject ID not provided for deletion.");
+  }
+  const deletedSubject = await populateSubject(
+    Subject.findByIdAndDelete(subjectId)
+  );
+  if (!deletedSubject) {
+    throw new ApiError(404, "Subject not found for deletion.");
+  }
+  return res
+    .status(200)
+    .json(
+      new Apiresponse(200, deletedSubject, "Subject deleted successfully.")
+    );
+});
+
+const subjectCount = asyncHandler(async (req, res) => {
+  const count = await Subject.countDocuments();
+  return res
+    .status(200)
+    .json(new Apiresponse(200, count, "Subject count fetched successfully."));
+});
+
+export { addSubject, getAllSubjects, updateSubject, deleteSubject, subjectCount };

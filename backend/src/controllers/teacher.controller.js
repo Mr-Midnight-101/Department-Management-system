@@ -1,47 +1,43 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import ApiError from "../utils/ApiError.js";
 import { Teacher } from "../models/teacher.model.js";
-import { uploadOnCloudinary } from "../utils/cloudinary.js"; // Assumed working utility
+import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import Apiresponse from "../utils/Apiresponse.js";
 import jwt from "jsonwebtoken";
-import { capitalize } from "../utils/capitalize.js"; // Using your capitalize utility
+import { capitalize } from "../utils/capitalize.js";
 
-// Helper to generate tokens
 const generateAccessAndRefreshTokens = async (teacherId) => {
-  try {
-    const teacher = await Teacher.findById(teacherId);
-    if (!teacher) {
-      throw new ApiError(404, "Teacher not found during token generation.");
-    }
-    const accessToken = teacher.generateAccessToken();
-    const refreshToken = teacher.generateRefreshToken();
-
-    teacher.refreshToken = refreshToken;
-    await teacher.save({ validateBeforeSave: false });
-
-    return { accessToken, refreshToken };
-  } catch (error) {
-    console.error("Error generating tokens:", error);
-    throw new ApiError(500, "Something went wrong while generating tokens.");
-  }
+  const teacher = await Teacher.findById(teacherId);
+  if (!teacher)
+    throw new ApiError(404, "Teacher not found during token generation.");
+  const accessToken = teacher.generateAccessToken();
+  const refreshToken = teacher.generateRefreshToken();
+  teacher.teacherRefreshToken = refreshToken;
+  await teacher.save({ validateBeforeSave: false });
+  return { accessToken, refreshToken };
 };
 
-// Register a new teacher
 const registerTeacher = asyncHandler(async (req, res) => {
-  const {
-    fullName,
-    email,
-    username,
-    password,
+  let {
+    teacherFullName,
+    teacherEmail,
+    teacherUsername,
+    teacherPassword,
     teacherId,
-    avatar,
-    assignedSubjects,
-    contactInfo,
+    teacherAvatar,
+    teacherAssignedSubjects,
+    teacherContactInfo,
   } = req.body;
 
-  // Validate required fields
   if (
-    [fullName, username, email, password, teacherId, contactInfo].some(
+    [
+      teacherFullName,
+      teacherUsername,
+      teacherEmail,
+      teacherPassword,
+      teacherId,
+      teacherContactInfo,
+    ].some(
       (field) =>
         field === undefined ||
         field === null ||
@@ -51,70 +47,54 @@ const registerTeacher = asyncHandler(async (req, res) => {
     throw new ApiError(400, "One or more required fields cannot be empty.");
   }
 
-  // Check if teacher already exists
   const existedTeacher = await Teacher.findOne({
-    $or: [{ username }, { email }, { teacherId }],
+    $or: [
+      { teacherUsername },
+      { teacherEmail },
+      { teacherId },
+      { teacherContactInfo },
+    ],
   });
 
   if (existedTeacher) {
     let errorMessage = "Teacher already exists.";
-    if (existedTeacher.username === username.toLowerCase())
+    if (existedTeacher.teacherUsername === teacherUsername.toLowerCase())
       errorMessage = "Username already taken.";
-    else if (existedTeacher.email === email.toLowerCase())
+    else if (existedTeacher.teacherEmail === teacherEmail.toLowerCase())
       errorMessage = "Email already registered.";
     else if (existedTeacher.teacherId === teacherId)
       errorMessage = "Teacher ID already registered.";
-
+    else if (existedTeacher.teacherContactInfo === teacherContactInfo)
+      errorMessage = "Contact info already registered.";
     throw new ApiError(409, errorMessage);
   }
 
-  // Handle avatar upload if present
   const avatarLocalpath = req.file?.path;
   let avatarImage = { url: "" };
-
   if (avatarLocalpath) {
-    try {
-      avatarImage = await uploadOnCloudinary(avatarLocalpath);
-    } catch (error) {
-      console.error("Cloudinary upload error:", error);
-    }
+    avatarImage = await uploadOnCloudinary(avatarLocalpath);
   }
 
-  fullName = capitalize(fullName);
+  teacherFullName = capitalize(teacherFullName);
 
-  // Create teacher document
   const teacher = await Teacher.create({
-    fullName: fullName.trim().toLowerCase(),
-    email: email.trim().toLowerCase(),
-    username: username.trim().toLowerCase(),
-    password,
+    teacherFullName: teacherFullName.trim().toLowerCase(),
+    teacherEmail: teacherEmail.trim().toLowerCase(),
+    teacherUsername: teacherUsername.trim().toLowerCase(),
+    teacherPassword,
     teacherId: teacherId.trim(),
-    avatar: avatarImage?.url || "",
-    contactInfo: contactInfo.trim(),
-    assignedSubjects: assignedSubjects || [],
+    teacherAvatar: avatarImage?.url || "",
+    teacherContactInfo: teacherContactInfo.trim(),
+    teacherAssignedSubjects: teacherAssignedSubjects || [],
   });
 
-  // Fetch created teacher without sensitive fields
-  const createdTeacher = await Teacher.aggregate([
-    { $match: { _id: teacher._id } },
-    {
-      $lookup: {
-        from: "subjects",
-        localField: "assignedSubjects",
-        foreignField: "_id",
-        as: "assignedSubjects",
-      },
-    },
-    {
-      $unwind: { path: "$assignedSubjects", preserveNullAndEmptyArrays: true },
-    },
-    {
-      $project: {
-        password: 0,
-        refreshToken: 0,
-      },
-    },
-  ]);
+  const createdTeacher = await Teacher.findById(teacher._id)
+    .select("-teacherPassword -teacherRefreshToken")
+    .populate({
+      path: "teacherAssignedSubjects",
+      select: "subjectName",
+      options: { sort: "subjectName" },
+    });
 
   if (!createdTeacher) {
     throw new ApiError(
@@ -130,11 +110,10 @@ const registerTeacher = asyncHandler(async (req, res) => {
     );
 });
 
-// Login a teacher
 const loginTeacher = asyncHandler(async (req, res) => {
-  const { username, email, password } = req.body;
+  const { teacherUsername, teacherEmail, teacherPassword } = req.body;
 
-  if ((!username && !email) || !password) {
+  if ((!teacherUsername && !teacherEmail) || !teacherPassword) {
     throw new ApiError(
       400,
       "Please provide either username or email and the password."
@@ -142,14 +121,14 @@ const loginTeacher = asyncHandler(async (req, res) => {
   }
 
   const teacher = await Teacher.findOne({
-    $or: [{ username }, { email }],
+    $or: [{ teacherUsername }, { teacherEmail }],
   });
 
   if (!teacher) {
     throw new ApiError(404, "Teacher not found.");
   }
 
-  const isPasswordCorrect = await teacher.isPasswordCorrect(password);
+  const isPasswordCorrect = await teacher.isPasswordCorrect(teacherPassword);
 
   if (!isPasswordCorrect) {
     throw new ApiError(401, "Invalid credentials.");
@@ -160,7 +139,7 @@ const loginTeacher = asyncHandler(async (req, res) => {
   );
 
   const loggedInTeacher = await Teacher.findById(teacher._id).select(
-    "-password -refreshToken"
+    "-teacherPassword -teacherRefreshToken"
   );
 
   const options = {
@@ -177,11 +156,10 @@ const loginTeacher = asyncHandler(async (req, res) => {
     );
 });
 
-// Logout a teacher
 const logoutTeacher = asyncHandler(async (req, res) => {
   await Teacher.findByIdAndUpdate(
     req.teacher._id,
-    { $unset: { refreshToken: 1 } },
+    { $unset: { teacherRefreshToken: 1 } },
     { new: true }
   );
 
@@ -197,7 +175,6 @@ const logoutTeacher = asyncHandler(async (req, res) => {
     .json(new Apiresponse(200, {}, "Teacher logged out successfully."));
 });
 
-// Refresh access token
 const refreshAccessToken = asyncHandler(async (req, res) => {
   const incomingRefreshToken =
     req.cookies.refreshToken || req.body.refreshToken;
@@ -209,63 +186,53 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     );
   }
 
+  let decodedToken;
   try {
-    const decodedToken = jwt.verify(
+    decodedToken = jwt.verify(
       incomingRefreshToken,
       process.env.REFRESH_TOKEN_SECRET
     );
-
-    const teacher = await Teacher.findById(decodedToken?._id);
-
-    if (!teacher) {
-      throw new ApiError(401, "Unauthorized request. Invalid refresh token.");
-    }
-
-    if (incomingRefreshToken !== teacher.refreshToken) {
-      throw new ApiError(
-        401,
-        "Refresh token is expired or invalid. Please log in again."
-      );
-    }
-
-    const { accessToken, refreshToken: newRefreshToken } =
-      await generateAccessAndRefreshTokens(teacher._id);
-
-    const options = {
-      httpOnly: true,
-      secure: true,
-    };
-
-    return res
-      .status(200)
-      .cookie("accessToken", accessToken, options)
-      .cookie("refreshToken", newRefreshToken, options)
-      .json(
-        new Apiresponse(
-          200,
-          { accessToken, refreshToken: newRefreshToken },
-          "Access token refreshed successfully."
-        )
-      );
   } catch (error) {
-    console.error("Error refreshing access token:", error);
-    if (
-      error instanceof jwt.JsonWebTokenError ||
-      error instanceof jwt.TokenExpiredError
-    ) {
-      throw new ApiError(
-        401,
-        "Invalid or expired refresh token. Please log in again."
-      );
-    }
     throw new ApiError(
-      500,
-      "Something went wrong while refreshing access token."
+      401,
+      "Invalid or expired refresh token. Please log in again."
     );
   }
+
+  const teacher = await Teacher.findById(decodedToken?._id);
+
+  if (!teacher) {
+    throw new ApiError(401, "Unauthorized request. Invalid refresh token.");
+  }
+
+  if (incomingRefreshToken !== teacher.teacherRefreshToken) {
+    throw new ApiError(
+      401,
+      "Refresh token is expired or invalid. Please log in again."
+    );
+  }
+
+  const { accessToken, refreshToken: newRefreshToken } =
+    await generateAccessAndRefreshTokens(teacher._id);
+
+  const options = {
+    httpOnly: true,
+    secure: true,
+  };
+
+  return res
+    .status(200)
+    .cookie("accessToken", accessToken, options)
+    .cookie("refreshToken", newRefreshToken, options)
+    .json(
+      new Apiresponse(
+        200,
+        { accessToken, refreshToken: newRefreshToken },
+        "Access token refreshed successfully."
+      )
+    );
 });
 
-// Change teacher's password
 const changePassword = asyncHandler(async (req, res) => {
   const { oldPassword, newPassword } = req.body;
 
@@ -273,7 +240,10 @@ const changePassword = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Please provide both old and new passwords.");
   }
 
-  const teacher = await Teacher.findById(req.teacher._id).select("+password");
+  const teacher = await Teacher.findById(req.teacher._id, {
+    new: true,
+    runValidators: true,
+  }).select("+teacherPassword");
 
   const isPasswordCorrect = await teacher.isPasswordCorrect(oldPassword);
 
@@ -288,7 +258,7 @@ const changePassword = asyncHandler(async (req, res) => {
     );
   }
 
-  teacher.password = newPassword;
+  teacher.teacherPassword = newPassword;
   await teacher.save();
 
   return res
@@ -296,7 +266,6 @@ const changePassword = asyncHandler(async (req, res) => {
     .json(new Apiresponse(200, {}, "Password updated successfully."));
 });
 
-// Get authenticated teacher details
 const getCurrentTeacher = asyncHandler(async (req, res) => {
   if (!req.teacher) {
     throw new ApiError(401, "Teacher not authenticated.");
@@ -312,25 +281,46 @@ const getCurrentTeacher = asyncHandler(async (req, res) => {
     );
 });
 
-// Update teacher details (non-sensitive)
 const updateTeacherDetails = asyncHandler(async (req, res) => {
-  let { fullName, email, username, teacherId, contactInfo } = req.body;
+  let {
+    teacherFullName,
+    teacherEmail,
+    teacherUsername,
+    teacherId,
+    teacherContactInfo,
+  } = req.body;
 
-  if (!(fullName || email || username || teacherId || contactInfo)) {
+  if (
+    !(
+      teacherFullName ||
+      teacherEmail ||
+      teacherUsername ||
+      teacherId ||
+      teacherContactInfo
+    )
+  ) {
     throw new ApiError(400, "Please provide at least one field to update.");
   }
 
-  if (fullName) fullName = capitalize(fullName);
+  if (teacherFullName) teacherFullName = capitalize(teacherFullName);
 
   const updatedTeacher = await Teacher.findByIdAndUpdate(
     req.teacher._id,
     {
       $set: {
-        ...(fullName && { fullName: fullName.trim().toLowerCase() }),
-        ...(email && { email: email.trim().toLowerCase() }),
-        ...(username && { username: username.trim().toLowerCase() }),
+        ...(teacherFullName && {
+          teacherFullName: teacherFullName.trim().toLowerCase(),
+        }),
+        ...(teacherEmail && {
+          teacherEmail: teacherEmail.trim().toLowerCase(),
+        }),
+        ...(teacherUsername && {
+          teacherUsername: teacherUsername.trim().toLowerCase(),
+        }),
         ...(teacherId && { teacherId: teacherId.trim() }),
-        ...(contactInfo && { contactInfo: contactInfo.trim() }),
+        ...(teacherContactInfo && {
+          teacherContactInfo: teacherContactInfo.trim(),
+        }),
       },
     },
     {
@@ -338,8 +328,12 @@ const updateTeacherDetails = asyncHandler(async (req, res) => {
       runValidators: true,
     }
   )
-    .select("-password -refreshToken")
-    .populate();
+    .select("-teacherPassword -teacherRefreshToken")
+    .populate({
+      path: "teacherAssignedSubjects",
+      select: "subjectName",
+      options: { sort: "subjectName" },
+    });
 
   if (!updatedTeacher) {
     throw new ApiError(404, "Teacher not found for update.");
@@ -356,7 +350,6 @@ const updateTeacherDetails = asyncHandler(async (req, res) => {
     );
 });
 
-// Update teacher avatar
 const updateTeacherAvatar = asyncHandler(async (req, res) => {
   const avatarLocalpath = req.file?.path;
 
@@ -372,9 +365,9 @@ const updateTeacherAvatar = asyncHandler(async (req, res) => {
 
   const updatedTeacher = await Teacher.findByIdAndUpdate(
     req.teacher._id,
-    { $set: { avatar: avatar.url } },
+    { $set: { teacherAvatar: avatar.url } },
     { new: true }
-  ).select("-password -refreshToken");
+  ).select("-teacherPassword -teacherRefreshToken");
 
   if (!updatedTeacher) {
     throw new ApiError(500, "Failed to update teacher avatar in the database.");
@@ -391,17 +384,20 @@ const updateTeacherAvatar = asyncHandler(async (req, res) => {
     );
 });
 
-// Get teacher by ID
-const getData = asyncHandler(async (req, res) => {
+const getTeacherById = asyncHandler(async (req, res) => {
   const teacherId = req.params.teacherId;
 
   if (!teacherId) {
     throw new ApiError(400, "Teacher ID is required.");
   }
 
-  const teacher = await Teacher.findById(teacherId).select(
-    "-password -refreshToken"
-  );
+  const teacher = await Teacher.findById(teacherId)
+    .select("-teacherPassword -teacherRefreshToken")
+    .populate({
+      path: "teacherAssignedSubjects",
+      select: "subjectName",
+      options: { sort: "subjectName" },
+    });
 
   if (!teacher) {
     throw new ApiError(404, "Teacher not found.");
@@ -412,17 +408,13 @@ const getData = asyncHandler(async (req, res) => {
     .json(new Apiresponse(200, teacher, "Teacher fetched successfully."));
 });
 
-const getAllData = asyncHandler(async () => {
-  const filter = {};
-
-  const teacherList = await Teacher.find({ filter })
-    .select("-password -refreshToken")
+const getAllTeachers = asyncHandler(async (req, res) => {
+  const teacherList = await Teacher.find({})
+    .select("-teacherPassword -teacherRefreshToken")
     .populate({
-      path: "assignedSubjects",
+      path: "teacherAssignedSubjects",
       select: "subjectName",
-      options: {
-        sort: "subjectName",
-      },
+      options: { sort: "subjectName" },
     });
 
   if (teacherList.length === 0) {
@@ -434,13 +426,8 @@ const getAllData = asyncHandler(async () => {
     .json(new Apiresponse(200, teacherList, "Teachers fetched successfully"));
 });
 
-const totalDocument = asyncHandler(async (req, res) => {
+const teacherCount = asyncHandler(async (req, res) => {
   const count = await Teacher.countDocuments();
-
-  if (!count) {
-    throw new ApiError(404, "No teacher records found in the database.");
-  }
-
   res
     .status(200)
     .json(new Apiresponse(200, count, "Teacher count fetched successfully."));
@@ -455,7 +442,7 @@ export {
   getCurrentTeacher,
   updateTeacherDetails,
   updateTeacherAvatar,
-  getData,
-  getAllData,
-  totalDocument,
+  getTeacherById,
+  getAllTeachers,
+  teacherCount,
 };

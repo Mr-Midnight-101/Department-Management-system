@@ -1,11 +1,8 @@
-const autosizeOptions = {
-  includeOutliers: true,
-};
-
-export default function ColumnAutosizingDynamicRowHeight() {
-  const apiRef = useGridApiRef();
-
-}
-      <Button onClick={() => apiRef.current?.autosizeColumns(autosizeOptions)}>
-        Autosize Columns
-      </Button>
+0. grid action inside the columns
+1. page section 
+2. inside 1 > grid header action 
+3. inside 1 > grid wrapper 
+4. inside 1 > Form Dialog
+5. inside 4 > dialog content
+6. dialog content > form field stack 
+7. Delete confirmation dialog

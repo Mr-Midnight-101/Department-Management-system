@@ -10,59 +10,49 @@ import {
   getCurrentTeacher,
   updateTeacherDetails,
   updateTeacherAvatar,
-  getData,
-  getAllData,
-  totalDocument,
-} from "../controllers/teacher.controller.js"; // Corrected import path and names
-import { verifyJWT } from "../middleware/auth.middleware.js"; // Assuming this middleware exists
-import { upload } from "../middleware/multer.middleware.js"; // Assuming this middleware exists
+  getTeacherById,
+  getAllTeachers,
+  teacherCount,
+} from "../controllers/teacher.controller.js";
+import { verifyJWT } from "../middleware/auth.middleware.js";
+import { upload } from "../middleware/multer.middleware.js";
 
-const teacherRoutes = Router(); // Renamed from authRoute for clarity
+const teacherRoutes = Router();
+// Route to get the count of all teachers
+teacherRoutes.route("/count").get(teacherCount);
 
-// --- Authentication Routes ---
+// Route to get all teachers
+teacherRoutes.route("/").get(getAllTeachers);
 
 // Route for teacher registration with avatar upload middleware
-teacherRoutes
-  .route("/auth/register")
-  .post(upload.single("avatar"), registerTeacher);
+teacherRoutes.route("/register").post(upload.single("avatar"), registerTeacher);
 
 // Route for teacher login
-teacherRoutes.route("/auth/login").post(loginTeacher);
+teacherRoutes.route("/login").post(loginTeacher);
 
-// Route to refresh access token using refresh token (Doesn't require verifyJWT as it validates the refresh token itself)
-teacherRoutes.route("/auth/refresh-token").post(verifyJWT, refreshAccessToken); // POST is common for sending token in body, PUT is also possible
-
-// --- Secured Routes (Require JWT Verification) ---
-
-// Apply verifyJWT middleware to all subsequent routes in this file
-// teacherRoutes.use(verifyJWT); // Alternative: apply middleware globally to all routes below this line
+//🌟 secure routes
+// Route to refresh access token using refresh token
+teacherRoutes.route("/refresh-token").post(verifyJWT, refreshAccessToken);
 
 // Route for teacher logout (Requires authentication)
-teacherRoutes.route("/auth/logout").post(verifyJWT, logoutTeacher); // Applied middleware per route
+teacherRoutes.route("/logout").post(verifyJWT, logoutTeacher);
 
 // Route to change authenticated teacher's password (Requires authentication)
-teacherRoutes
-  .route("/profile/change-password")
-  .patch(verifyJWT, changePassword);
+teacherRoutes.route("/change-password").patch(verifyJWT, changePassword);
 
 // Route to get authenticated teacher's current details (Requires authentication)
-teacherRoutes.route("/profile/current-user").get(verifyJWT, getCurrentTeacher); // Changed method to GET
+teacherRoutes.route("/user").get(verifyJWT, getCurrentTeacher);
 
 // Route to update authenticated teacher's non-sensitive details (Requires authentication)
-teacherRoutes
-  .route("/profile/update-details")
-  .put(verifyJWT, updateTeacherDetails); // Changed method to PUT
+teacherRoutes.route("/update-details").patch(verifyJWT, updateTeacherDetails);
 
 // Route to update authenticated teacher's avatar (Requires authentication and file upload)
-teacherRoutes.route("/profile/update-avatar").put(
+teacherRoutes.route("/update-avatar").patch(
   verifyJWT, // Ensure user is authenticated first
   upload.single("avatar"), // Handle avatar file upload
   updateTeacherAvatar // Process the update
 );
 
-teacherRoutes.route("/getdata/:id").get(getData);
-teacherRoutes.route("/getAlldata").get(getAllData);
-teacherRoutes.route("/total-document").get(totalDocument);
-
-export { teacherRoutes }; // Export the router
-getAllData;
+// Route to get a specific teacher by ID
+teacherRoutes.route("/:teacherId").get(getTeacherById);
+export { teacherRoutes };

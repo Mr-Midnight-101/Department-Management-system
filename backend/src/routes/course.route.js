@@ -1,45 +1,21 @@
-// src/routes/course.routes.js
-
 import { Router } from "express";
 import {
   addCourse,
   deleteCourse,
-  getAllCourses, // Import the new function
+  getAllCourses,
   getCourseById,
   updateCourse,
-} from "../controllers/course.controller.js"; // Corrected import to named exports
-import { Course } from "../models/course.model.js";
-import Apiresponse from "../utils/Apiresponse.js";
+  courseCount,
+} from "../controllers/course.controller.js";
 
-const courseRoutes = Router(); // Renamed for clarity if needed, but kept original name
+const courseRoutes = Router();
 
-courseRoutes.route("/count").get(async (req, res) => {
-  try {
-    const count = await Course.countDocuments();
-    return res.status(200).json(new Apiresponse(200, count, "count"));
-  } catch (error) {
-    console.log(error);
-  }
-});
-// Define routes for courses.
-// Using the base path /api/courses (assuming this is how the router is used)
+courseRoutes.route("/count").get(courseCount);
+courseRoutes.route("/").post(addCourse).get(getAllCourses);
+courseRoutes
+  .route("/:id")
+  .get(getCourseById)
+  .patch(updateCourse)
+  .delete(deleteCourse);
 
-// Route to add a new course (POST request)
-// POST /api/courses
-courseRoutes.route("/add-course").post(addCourse);
-
-// Route to get all courses (GET request)
-// GET /api/courses
-courseRoutes.route("/get-course").get(getAllCourses);
-
-// Route to get a specific course by ID (GET request with parameter)
-// GET /api/courses/:id
-courseRoutes.route("/:id").get(getCourseById);
-
-// Route to update a specific course by ID (PUT request with parameter)
-// PUT /api/courses/:id
-courseRoutes.route("/:id").patch(updateCourse);
-
-courseRoutes.route("/:id").delete(deleteCourse);
-// Export the router
 export { courseRoutes };

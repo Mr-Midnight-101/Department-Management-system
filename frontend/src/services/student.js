@@ -1,114 +1,64 @@
 /* eslint-disable no-unused-vars */
 import axios from "axios";
 
-const studentCount = async () => {
-  try {
-    const response = await axios.get("/api/student/count");
-    return response.data;
-  } catch (error) {
-    console.log(error);
-  }
+export const studentCount = async () =>
+  await axios.get("/api/student/count").then((res) => res.data);
+
+export const getStudents = async () =>
+  await axios.get("/api/student/").then((res) => res.data.data);
+
+export const studentRegister = async (registerData) => {
+  const student = {
+    studentFullName: registerData.studentFullName,
+    studentDateOfBirth: registerData.studentDateOfBirth,
+    studentEnrollmentNumber: registerData.studentEnrollmentNumber,
+    studentRollNumber: registerData.studentRollNumber,
+    studentEmail: registerData.studentEmail,
+    studentContactNumber: registerData.studentContactNumber,
+    studentFatherName: registerData.studentFatherName,
+    studentAddress: {
+      street: registerData.studentAddress?.street,
+      city: registerData.studentAddress?.city,
+      state: registerData.studentAddress?.state,
+      country: registerData.studentAddress?.country,
+      postalCode: registerData.studentAddress?.postalCode,
+    },
+    studentCategory: registerData.studentCategory,
+    studentCurrentCourseId: registerData.studentCurrentCourseId,
+    studentType: registerData.studentType,
+    studentAdmissionYear: registerData.studentAdmissionYear,
+  };
+  return await axios.post("/api/student/", student).then((res) => res.data);
 };
 
-const getStudents = async () => {
-  try {
-    const response = await axios.get("/api/student/");
-    const output = response.data.data;
-    return output;
-  } catch (error) {
-    console.log(error);
-  }
+export const updateStudentDetails = async (updateData) => {
+  const id = updateData?._id;
+  const student = {
+    studentFullName: updateData.studentFullName,
+    studentDateOfBirth: updateData.studentDateOfBirth,
+    studentEnrollmentNumber: updateData.studentEnrollmentNumber,
+    studentRollNumber: updateData.studentRollNumber,
+    studentEmail: updateData.studentEmail,
+    studentContactNumber: updateData.studentContactNumber,
+    studentFatherName: updateData.studentFatherName,
+    studentAddress: {
+      street: updateData.studentAddress?.street,
+      city: updateData.studentAddress?.city,
+      state: updateData.studentAddress?.state,
+      country: updateData.studentAddress?.country,
+      postalCode: updateData.studentAddress?.postalCode,
+    },
+    studentCategory: updateData.studentCategory,
+    studentCurrentCourseId: updateData.studentCurrentCourseId,
+    studentType: updateData.studentType,
+    studentAdmissionYear: updateData.studentAdmissionYear,
+  };
+  return await axios
+    .patch(`/api/student/${id}`, student)
+    .then((res) => res.data);
 };
 
-const studentRegister = async (registerData) => {
-  console.log("This is api call from register Services ", registerData);
-
-  try {
-    const student = {
-      ...registerData,
-      fullName: registerData.fullName,
-      dateOfBirth: registerData.dateOfBirth,
-      enrollmentNo: registerData.enrollmentNo,
-      rollNo: registerData.rollNo,
-      email: registerData.email,
-      contactInfo: registerData.contactInfo,
-      fatherName: registerData.fatherName,
-      fullAdd: {
-        ...registerData.fullAdd,
-        city: registerData.fullAdd.city,
-        state: registerData.fullAdd.state,
-        country: registerData.fullAdd?.country,
-        postalCode: registerData.fullAdd?.postalCode,
-      },
-      category: registerData.category,
-      studentType: registerData.studentType,
-      admissionYear: registerData.admissionYear,
-    };
-    const register = await axios.post("/api/student/", student);
-    const output = register;
-    return output;
-  } catch (error) {
-    console.log(error);
-  }
-};
-
-const updateStudentDetails = async (updateData) => {
-  console.log("This is api call from update Services ", updateData);
-
-  try {
-    const id = updateData?._id;
-    const student = {
-      ...updateData,
-      fullName: updateData.fullName,
-      dateOfBirth: updateData.dateOfBirth,
-      enrollmentNo: updateData.enrollmentNo,
-      rollNo: updateData.rollNo,
-      email: updateData.email,
-      contactInfo: updateData.contactInfo,
-      fatherName: updateData.fatherName,
-      fullAdd: {
-        ...updateData.fullAdd,
-        city: updateData.fullAdd?.city,
-        state: updateData.fullAdd?.state,
-        country: updateData.fullAdd?.country,
-        postalCode: updateData.fullAdd?.postalCode,
-      },
-      category: updateData.category,
-      studentType: updateData.studentType,
-      admissionYear: updateData.admissionYear,
-    };
-
-    // Remove _id from the body
-    const { _id, ...studentData } = student;
-
-    console.log(
-      "student after setting data from frontend call to backend update services",
-      studentData
-    );
-
-    const update = await axios.patch(`/api/student/${id}`, studentData);
-    return update.data;
-  } catch (error) {
-    console.log(error);
-  }
-};
-
-const deleteStudent = async (deleteStudent) => {
-  try {
-    const { _id } = deleteStudent;
-
-    const student = await axios.delete(`/api/student/${_id}`);
-    if (!student) console.log("deletion error cant delete");
-    return student;
-  } catch (error) {
-    console.log("deletion error", error);
-  }
-};
-
-export {
-  studentCount,
-  getStudents,
-  studentRegister,
-  updateStudentDetails,
-  deleteStudent,
+export const deleteStudent = async (student) => {
+  const { _id } = student;
+  return await axios.delete(`/api/student/${_id}`).then((res) => res.data);
 };

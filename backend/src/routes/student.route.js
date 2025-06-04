@@ -1,4 +1,3 @@
-// src/routes/student.routes.js
 import { Router } from "express";
 import {
   addStudent,
@@ -11,16 +10,12 @@ import {
 
 const studentRoutes = Router();
 
-// GET /student/count
 studentRoutes.route("/count").get(studentCount);
-// POST /student
-studentRoutes.route("/").post(addStudent);
-// GET /student
-studentRoutes.route("/").get(getAllStudents);
-// GET /student/:id
-studentRoutes.route("/:id").get(getStudentById);
-// PATCH /student/:id
-studentRoutes.route("/:id").patch(updateStudent);
+studentRoutes.route("/").post(addStudent).get(getAllStudents);
+studentRoutes
+  .route("/:id")
+  .get(getStudentById)
+  .patch(updateStudent)
+  .delete(deleteStudent);
 
-studentRoutes.route("/:id").delete(deleteStudent);
 export { studentRoutes };
