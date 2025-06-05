@@ -25,18 +25,9 @@ import FormDialogWrapper from "../../components/FormDialogWrapper.jsx";
 import FormFieldsStack from "../../components/FormFieldsStack.jsx";
 import DeleteConfirmationDialogContent from "../../components/DeleteConfirmationDialogContent.jsx";
 import GridActionButton from "../../components/GridActionButton.jsx";
-
+import { durationoptions, semesterOptions } from "./menuList.js";
+import courseValidator from "./courseValidator.js";
 // Example dropdown options (customize as needed)
-const semesterOptions = [
-  { value: 1, label: "Semester 1" },
-  { value: 2, label: "Semester 2" },
-  { value: 3, label: "Semester 3" },
-  { value: 4, label: "Semester 4" },
-  { value: 5, label: "Semester 5" },
-  { value: 6, label: "Semester 6" },
-  { value: 7, label: "Semester 7" },
-  { value: 8, label: "Semester 8" },
-];
 
 const Course = () => {
   const theme = useTheme();
@@ -72,7 +63,8 @@ const Course = () => {
   // Register dialog state
   const [isRegisterDialogOpen, setRegisterDialogOpen] = useState(false);
   const [registerForm, setRegisterForm] = useState({});
-  const [registerError, setRegisterError] = useState("");
+  const [registerError, setRegisterError] = useState(undefined);
+  const [validationError, setValidationError] = useState("");
   const [registerLoading, setRegisterLoading] = useState(false);
 
   // Register Dialog open/close handlers
@@ -81,6 +73,8 @@ const Course = () => {
     setRegisterDialogOpen(true);
   };
   const closeRegisterDialog = () => {
+    setRegisterError({});
+    setValidationError("");
     setRegisterDialogOpen(false);
     setRefreshTable((prev) => !prev);
   };
@@ -95,10 +89,12 @@ const Course = () => {
   const openUpdateDialog = (course) => {
     setSelectedCourse(course);
     setUpdateDialogOpen(true);
+    setUpdateLoading(false);
   };
   const closeUpdateDialog = () => {
     setUpdateDialogOpen(false);
     setRefreshTable((prev) => !prev);
+    setUpdateError(undefined);
   };
 
   // Delete dialog state
@@ -114,21 +110,27 @@ const Course = () => {
 
   // CRUD handlers
   const handleRegisterCourse = async (formData) => {
-    setRegisterError("");
+    setRegisterError({});
     setRegisterLoading(true);
-    // Add validation as needed
+    const validationMsg = courseValidator(formData);
+    if (Object.keys(validationMsg).length > 0) {
+      setRegisterLoading(false);
+      setRegisterError(validationMsg);
+      console.log("validation msg returned value", validationMsg);
+      return;
+    }
+
     try {
       const response = await createCourse(formData);
+      console.log(response);
       if (!response || response.status !== 201) {
-        setRegisterError(
-          response?.message || "Registration failed. Please try again."
-        );
         setRegisterLoading(false);
         return;
       }
       closeRegisterDialog();
     } catch (error) {
-      setRegisterError(
+      console.log(error);
+      setValidationError(
         error?.response?.data?.message ||
           error?.message ||
           "Registration failed. Please try again."
@@ -139,19 +141,26 @@ const Course = () => {
   };
 
   const handleUpdateCourse = async (course) => {
-    setUpdateError("");
+    setUpdateError({});
     setUpdateLoading(true);
-    // Add validation as needed
+    const validationMsg = courseValidator(course);
+    if (Object.keys(validationMsg).length > 0) {
+      setUpdateLoading(false);
+      setUpdateError(validationMsg);
+      console.log("validation msg returned value", validationMsg);
+      return;
+    }
     try {
       const updated = await updateCourse(course);
-      if (!updated) {
-        setUpdateError("Failed to update course");
+      if (!updated || updated.status !== 201) {
         setUpdateLoading(false);
+        closeUpdateDialog();
         return;
       }
-      closeUpdateDialog();
     } catch (error) {
-      setUpdateError(
+      console.log("update error", error);
+
+      setValidationError(
         error?.response?.data?.message ||
           error?.message ||
           "Update failed. Please try again."
@@ -272,7 +281,7 @@ const Course = () => {
                 {registerError && (
                   <Box mb={2}>
                     <Typography color="error" variant="body2">
-                      {registerError}
+                      {registerError?.requiredFieldError}
                     </Typography>
                   </Box>
                 )}
@@ -283,7 +292,9 @@ const Course = () => {
                     required
                     variant="outlined"
                     name="courseCode"
-                    value={registerForm.courseCode || ""}
+                    error={!!registerError?.courseCodeError}
+                    helperText={registerError?.courseCodeError}
+                    value={registerForm?.courseCode || ""}
                     onChange={(e) =>
                       setRegisterForm({
                         ...registerForm,
@@ -295,9 +306,11 @@ const Course = () => {
                     size="medium"
                     label="Course Title"
                     required
+                    error={!!registerError?.courseTitleError}
+                    helperText={registerError?.courseTitleError}
                     variant="outlined"
                     name="courseTitle"
-                    value={registerForm.courseTitle || ""}
+                    value={registerForm?.courseTitle || ""}
                     onChange={(e) =>
                       setRegisterForm({
                         ...registerForm,
@@ -309,24 +322,35 @@ const Course = () => {
                     size="medium"
                     label="Course Duration (YYYY-YYYY)"
                     required
+                    select
+                    error={!!registerError?.courseDurationError}
+                    helperText={registerError?.courseDurationError}
                     variant="outlined"
                     name="courseDuration"
-                    value={registerForm.courseDuration || ""}
+                    value={registerForm?.courseDuration || ""}
                     onChange={(e) =>
                       setRegisterForm({
                         ...registerForm,
                         [e.target.name]: e.target.value,
                       })
                     }
-                  />
+                  >
+                    {durationoptions.map((item) => (
+                      <MenuItem value={item.value} key={item.value}>
+                        {item.label}
+                      </MenuItem>
+                    ))}
+                  </TextField>
                   <TextField
                     size="medium"
                     label="Terms"
                     required
                     select
+                    error={!!registerError?.courseTermError}
+                    helperText={registerError?.courseTermError}
                     variant="outlined"
                     name="courseTerms"
-                    value={registerForm.courseTerms || ""}
+                    value={registerForm?.courseTerms || ""}
                     onChange={(e) =>
                       setRegisterForm({
                         ...registerForm,
@@ -347,7 +371,9 @@ const Course = () => {
                     variant="outlined"
                     name="courseCreditUnits"
                     type="number"
-                    value={registerForm.courseCreditUnits || ""}
+                    error={!!registerError?.courseCreditError}
+                    helperText={registerError?.courseCreditError}
+                    value={registerForm?.courseCreditUnits || ""}
                     onChange={(e) =>
                       setRegisterForm({
                         ...registerForm,
@@ -358,7 +384,19 @@ const Course = () => {
                   {/* Add more fields as needed */}
                 </FormFieldsStack>
               </DialogContent>
-              <Box display="flex" justifyContent="center">
+              <Box
+                display="flex"
+                justifyContent="center"
+                alignItems="center"
+                flexDirection="column"
+              >
+                {validationError && (
+                  <Box>
+                    <Typography variant="h6" color="error">
+                      {validationError}
+                    </Typography>
+                  </Box>
+                )}
                 <DialogActions
                   sx={{
                     "& :hover": {
@@ -396,8 +434,8 @@ const Course = () => {
             <DialogContent>
               {updateError && (
                 <Box mb={2}>
-                  <Typography color="error" variant="h6">
-                    {updateError}
+                  <Typography color="error" variant="body2">
+                    {updateError?.requiredFieldError}
                   </Typography>
                 </Box>
               )}
@@ -405,6 +443,8 @@ const Course = () => {
                 <TextField
                   label="Course Code"
                   name="courseCode"
+                  error={!!updateError?.courseCodeError}
+                  helperText={updateError?.courseCodeError}
                   value={selectedCourse?.courseCode || ""}
                   onChange={(e) =>
                     setSelectedCourse((prev) => ({
@@ -416,6 +456,8 @@ const Course = () => {
                 <TextField
                   label="Course Title"
                   name="courseTitle"
+                  error={!!updateError?.courseTitleError}
+                  helperText={updateError?.courseTitleError}
                   value={selectedCourse?.courseTitle || ""}
                   onChange={(e) =>
                     setSelectedCourse((prev) => ({
@@ -427,6 +469,9 @@ const Course = () => {
                 <TextField
                   label="Course Duration (YYYY-YYYY)"
                   name="courseDuration"
+                  select
+                  error={!!updateError?.courseDurationError}
+                  helperText={updateError?.courseDurationError}
                   value={selectedCourse?.courseDuration || ""}
                   onChange={(e) =>
                     setSelectedCourse((prev) => ({
@@ -434,11 +479,19 @@ const Course = () => {
                       [e.target.name]: e.target.value,
                     }))
                   }
-                />
+                >
+                  {durationoptions.map((item) => (
+                    <MenuItem value={item.value} key={item.value}>
+                      {item.label}
+                    </MenuItem>
+                  ))}
+                </TextField>
                 <TextField
                   label="Terms"
                   name="courseTerms"
                   select
+                  error={!!updateError?.courseTermError}
+                  helperText={updateError?.courseTermError}
                   value={selectedCourse?.courseTerms || ""}
                   onChange={(e) =>
                     setSelectedCourse((prev) => ({
@@ -457,6 +510,8 @@ const Course = () => {
                   label="Credit Units"
                   name="courseCreditUnits"
                   type="number"
+                  error={!!updateError?.courseCreditError}
+                  helperText={updateError?.courseCreditError}
                   value={selectedCourse?.courseCreditUnits || ""}
                   onChange={(e) =>
                     setSelectedCourse((prev) => ({
@@ -468,6 +523,14 @@ const Course = () => {
                 {/* Add more fields as needed */}
               </FormFieldsStack>
             </DialogContent>
+            {/* Update Validation Error */}
+            {validationError && (
+              <Box>
+                <Typography variant="h6" color="error">
+                  {validationError}
+                </Typography>
+              </Box>
+            )}
             <DialogActions
               sx={{
                 display: "flex",

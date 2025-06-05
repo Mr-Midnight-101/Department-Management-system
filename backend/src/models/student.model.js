@@ -45,11 +45,6 @@ const studentSchema = new mongoose.Schema(
       trim: true,
     },
     studentAddress: {
-      street: {
-        type: String,
-        trim: true,
-        default: "",
-      },
       city: {
         type: String,
         required: [true, "City is required"],
@@ -95,7 +90,7 @@ const studentSchema = new mongoose.Schema(
       type: Number,
       required: [true, "Admission year is required"],
       min: [1900, "Admission year cannot be before 1900"],
-      default: new Date().getFullYear(),
+      max: new Date().getFullYear() + 1,
     },
   },
   {

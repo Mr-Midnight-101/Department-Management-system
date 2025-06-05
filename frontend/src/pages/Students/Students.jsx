@@ -37,7 +37,7 @@ import PageSectionWrapper from "../../components/PageSectionWrapper.jsx";
 import FormDialogWrapper from "../../components/FormDialogWrapper.jsx";
 import FormFieldsStack from "../../components/FormFieldsStack.jsx";
 import DeleteConfirmationDialogContent from "../../components/DeleteConfirmationDialogContent.jsx";
-const StudentsPage = () => {
+const Students = () => {
   //theme setup
   const theme = useTheme();
   const colors = getColorTokens(theme.palette.mode);
@@ -124,33 +124,33 @@ const StudentsPage = () => {
   // Error and loading state for registration
   const [registerError, setRegisterError] = useState({});
   const [registerLoading, setRegisterLoading] = useState(false);
+  const [controllerError, setControllerError] = useState("");
   // Register Handler
   const handleRegisterStudent = async (formData) => {
+    console.log("handle register form: ", formData);
     setRegisterError({});
     setRegisterLoading(true);
     const validationMsg = validateStudentForm(formData);
+    console.log("after validation return output: ", validationMsg);
     if (validationMsg && Object.keys(validationMsg).length > 0) {
       setRegisterError(validationMsg);
       setRegisterLoading(false);
+      closeUpdateDialog();
       return;
     }
     try {
+      console.log("passing data in api after validation", formData);
       const response = await studentRegister(formData);
-      if (!response || response.status !== 201) {
-        setRegisterError(
-          response?.message || "Registration failed. Please try again."
-        );
-        setRegisterLoading(false);
-        return;
+      if (response.status === 201) {
+        setRegisterError({});
+        closeRegisterDialog();
       }
-      closeRegisterDialog();
-      setRefreshTable((prev) => !prev);
     } catch (error) {
-      setRegisterError(
-        error?.response?.data?.message ||
-          error?.message ||
-          "Registration failed. Please try again."
-      );
+      setControllerError(error?.response?.data?.message);
+      console.log(error);
+      console.log(error?.response);
+      console.log(error?.response?.data);
+      console.log(error?.response?.data?.message);
     } finally {
       setRegisterLoading(false);
     }
@@ -160,10 +160,14 @@ const StudentsPage = () => {
   const handleUpdateStudent = async (student) => {
     setUpdateError("");
     setUpdateLoading(true);
+    console.log("Handler called");
+    console.log(typeof student?.studentAdmissionYear);
+    console.log("Handler finished");
     const validationMsg = validateStudentForm(student);
     if (validationMsg && Object.keys(validationMsg).length > 0) {
       setUpdateError(validationMsg);
       setUpdateLoading(false);
+      closeUpdateDialog();
       return;
     }
     try {
@@ -173,8 +177,7 @@ const StudentsPage = () => {
         setUpdateLoading(false);
         return;
       }
-      closeUpdateDialog();
-      setRefreshTable((prev) => !prev);
+      closeUpdateDialog(); // This will toggle refreshTable
     } catch (error) {
       setUpdateError(
         error?.response?.data?.message ||
@@ -192,7 +195,6 @@ const StudentsPage = () => {
       const response = await deleteStudent(student);
       if (!response) console.error("Failed to delete student");
       closeDeleteDialog();
-      setRefreshTable((prev) => !prev);
     } catch (error) {
       console.error("Error deleting student:", error);
     }
@@ -369,6 +371,7 @@ const StudentsPage = () => {
                     </Typography>
                   </Box>
                 )}
+
                 <FormFieldsStack>
                   <TextField
                     size="medium"
@@ -495,12 +498,12 @@ const StudentsPage = () => {
                     error={!!registerError?.cityError}
                     helperText={registerError?.cityError}
                     name="city"
-                    value={registerForm?.fullAdd?.city || ""}
+                    value={registerForm?.studentAddress?.city || ""}
                     onChange={(e) =>
                       setRegisterForm({
                         ...registerForm,
-                        fullAdd: {
-                          ...registerForm.fullAdd,
+                        studentAddress: {
+                          ...registerForm.studentAddress,
                           [e.target.name]: e.target.value,
                         },
                       })
@@ -514,12 +517,12 @@ const StudentsPage = () => {
                     helperText={registerError?.stateError}
                     variant="outlined"
                     name="state"
-                    value={registerForm?.fullAdd?.state || ""}
+                    value={registerForm?.studentAddress?.state || ""}
                     onChange={(e) =>
                       setRegisterForm({
                         ...registerForm,
-                        fullAdd: {
-                          ...registerForm.fullAdd,
+                        studentAddress: {
+                          ...registerForm.studentAddress,
                           [e.target.name]: e.target.value,
                         },
                       })
@@ -533,13 +536,32 @@ const StudentsPage = () => {
                     error={!!registerError?.countryError}
                     helperText={registerError?.countryError}
                     name="country"
-                    value={registerForm?.fullAdd?.country || ""}
+                    value={registerForm?.studentAddress?.country || ""}
                     onChange={(e) =>
                       setRegisterForm({
                         ...registerForm,
-                        fullAdd: {
-                          ...registerForm.fullAdd,
+                        studentAddress: {
+                          ...registerForm.studentAddress,
                           [e.target.name]: e.target.value || "India",
+                        },
+                      })
+                    }
+                  />
+                  <TextField
+                    require="true"
+                    size="medium"
+                    label="Postal Code"
+                    variant="outlined"
+                    value={registerForm?.studentAddress?.postalCode || ""}
+                    error={!!registerError?.postalCodeError}
+                    helperText={registerError?.postalCodeError}
+                    name="postalCode"
+                    onChange={(e) =>
+                      setRegisterForm({
+                        ...registerForm,
+                        studentAddress: {
+                          ...registerForm.studentAddress,
+                          [e.target.name]: e.target.value,
                         },
                       })
                     }
@@ -550,10 +572,10 @@ const StudentsPage = () => {
                     required
                     select
                     variant="outlined"
-                    error={!!registerError?.categoryErro}
-                    helperText={registerError?.categoryErro}
-                    name="category"
-                    value={registerForm.category || ""}
+                    error={!!registerError?.categoryError}
+                    helperText={registerError?.categoryError}
+                    name="studentCategory"
+                    value={registerForm.studentCategory || ""}
                     onChange={(e) =>
                       setRegisterForm({
                         ...registerForm,
@@ -593,13 +615,14 @@ const StudentsPage = () => {
                   </TextField>
                   <TextField
                     size="medium"
+                    type="number"
                     label="Admission Year"
                     required
                     error={!!registerError?.admissionYearError}
                     helperText={registerError?.admissionYearError}
                     variant="outlined"
-                    name="admissionYear"
-                    value={registerForm.admissionYear || ""}
+                    name="studentAdmissionYear"
+                    value={registerForm.studentAdmissionYear || ""}
                     onChange={(e) =>
                       setRegisterForm({
                         ...registerForm,
@@ -607,27 +630,22 @@ const StudentsPage = () => {
                       })
                     }
                   />
-                  <TextField
-                    require="true"
-                    size="medium"
-                    label="Postal Code"
-                    variant="outlined"
-                    error={!!registerError?.postalCodeError}
-                    helperText={registerError?.postalCodeError}
-                    name="postalCode"
-                    onChange={(e) =>
-                      setRegisterForm({
-                        ...registerForm,
-                        fullAdd: {
-                          ...registerForm.fullAdd,
-                          postalCode: e.target.value,
-                        },
-                      })
-                    }
-                  />
                 </FormFieldsStack>
               </DialogContent>
-              <Box display="flex" justifyContent="center">
+              <Box
+                gap={1}
+                alignItems="center"
+                display="flex"
+                justifyContent="center"
+                flexDirection="column"
+              >
+                {controllerError && (
+                  <Box mb={2}>
+                    <Typography color="error" variant="body2">
+                      {controllerError}
+                    </Typography>
+                  </Box>
+                )}
                 <DialogActions
                   sx={{
                     "& :hover": {
@@ -674,8 +692,8 @@ const StudentsPage = () => {
               <FormFieldsStack>
                 <TextField
                   label="Full Name"
-                  name="fullName"
-                  value={selectedStudent?.fullName || ""}
+                  name="studentFullName"
+                  value={selectedStudent?.studentFullName || ""}
                   onChange={(e) =>
                     setSelectedStudent((prev) => ({
                       ...prev,
@@ -684,11 +702,11 @@ const StudentsPage = () => {
                   }
                 />
                 <TextField
-                  type="date"
+                  type="Date of birth"
                   label="DOB"
-                  name="dateOfBirth"
+                  name="studentDateOfBirth"
                   InputLabelProps={{ shrink: true }}
-                  value={dayjs(selectedStudent?.dateOfBirth).format(
+                  value={dayjs(selectedStudent?.studentDateOfBirth).format(
                     "YYYY-MM-DD"
                   )}
                   onChange={(e) =>
@@ -699,9 +717,9 @@ const StudentsPage = () => {
                   }
                 />
                 <TextField
-                  label="enrollmentNo"
-                  name="enrollmentNo"
-                  value={selectedStudent?.enrollmentNo || ""}
+                  label="Enrollment"
+                  name="studentEnrollmentNumber"
+                  value={selectedStudent?.studentEnrollmentNumber || ""}
                   onChange={(e) =>
                     setSelectedStudent((prev) => ({
                       ...prev,
@@ -710,9 +728,9 @@ const StudentsPage = () => {
                   }
                 />
                 <TextField
-                  label="rollNo"
-                  name="rollNo"
-                  value={selectedStudent?.rollNo || ""}
+                  label="Roll no."
+                  name="studentRollNumber"
+                  value={selectedStudent?.studentRollNumber || ""}
                   onChange={(e) =>
                     setSelectedStudent((prev) => ({
                       ...prev,
@@ -721,9 +739,9 @@ const StudentsPage = () => {
                   }
                 />
                 <TextField
-                  label="email"
-                  name="email"
-                  value={selectedStudent?.email || ""}
+                  label="Email"
+                  name="studentEmail"
+                  value={selectedStudent?.studentEmail || ""}
                   onChange={(e) =>
                     setSelectedStudent((prev) => ({
                       ...prev,
@@ -732,9 +750,9 @@ const StudentsPage = () => {
                   }
                 />
                 <TextField
-                  label="contactInfo"
-                  name="contactInfo"
-                  value={selectedStudent?.contactInfo || ""}
+                  label="Contact Info"
+                  name="studentContactNumber"
+                  value={selectedStudent?.studentContactNumber || ""}
                   onChange={(e) =>
                     setSelectedStudent((prev) => ({
                       ...prev,
@@ -743,9 +761,9 @@ const StudentsPage = () => {
                   }
                 />
                 <TextField
-                  label="fatherName"
-                  name="fatherName"
-                  value={selectedStudent?.fatherName || ""}
+                  label="Father Name"
+                  name="studentFatherName"
+                  value={selectedStudent?.studentFatherName || ""}
                   onChange={(e) =>
                     setSelectedStudent((prev) => ({
                       ...prev,
@@ -754,9 +772,9 @@ const StudentsPage = () => {
                   }
                 />
                 <TextField
-                  label="city"
+                  label="City"
                   name="city"
-                  value={selectedStudent?.fullAdd?.city || ""}
+                  value={selectedStudent?.studentAddress?.city || ""}
                   onChange={(e) =>
                     setSelectedStudent((prev) => ({
                       ...prev,
@@ -768,9 +786,9 @@ const StudentsPage = () => {
                   }
                 />
                 <TextField
-                  label="state"
+                  label="State"
                   name="state"
-                  value={selectedStudent?.fullAdd?.state || ""}
+                  value={selectedStudent?.studentAddress?.state || ""}
                   onChange={(e) =>
                     setSelectedStudent((prev) => ({
                       ...prev,
@@ -782,9 +800,9 @@ const StudentsPage = () => {
                   }
                 />
                 <TextField
-                  label="country"
+                  label="Country"
                   name="country"
-                  value={selectedStudent?.fullAdd?.country || ""}
+                  value={selectedStudent?.studentAddress?.country || ""}
                   onChange={(e) =>
                     setSelectedStudent((prev) => ({
                       ...prev,
@@ -796,9 +814,9 @@ const StudentsPage = () => {
                   }
                 />
                 <TextField
-                  label="postalCode"
+                  label="Postal"
                   name="postalCode"
-                  value={selectedStudent?.fullAdd?.postalCode || ""}
+                  value={selectedStudent?.studentAddress?.postalCode || ""}
                   onChange={(e) =>
                     setSelectedStudent((prev) => ({
                       ...prev,
@@ -810,10 +828,10 @@ const StudentsPage = () => {
                   }
                 />
                 <TextField
-                  label="category"
-                  name="category"
+                  label="Category"
+                  name="studentCategory"
                   select
-                  value={selectedStudent?.category || ""}
+                  value={selectedStudent?.studentCategory || ""}
                   onChange={(e) =>
                     setSelectedStudent((prev) => ({
                       ...prev,
@@ -828,7 +846,7 @@ const StudentsPage = () => {
                   ))}
                 </TextField>
                 <TextField
-                  label="studentType"
+                  label="Student type"
                   name="studentType"
                   select
                   value={selectedStudent?.studentType || ""}
@@ -846,9 +864,9 @@ const StudentsPage = () => {
                   ))}
                 </TextField>
                 <TextField
-                  label="admissionYear"
-                  name="admissionYear"
-                  value={selectedStudent?.admissionYear || ""}
+                  label="Admission"
+                  name="studentAdmissionYear"
+                  value={selectedStudent?.studentAdmissionYear || ""}
                   onChange={(e) =>
                     setSelectedStudent((prev) => ({
                       ...prev,
@@ -891,7 +909,7 @@ const StudentsPage = () => {
         {isDeleteDialogOpen && selectedStudent && (
           <FormDialogWrapper
             sx={{
-              height: "32vh",
+              height: "36vh",
             }}
             isDialogOpen={isDeleteDialogOpen}
             closeDialog={closeDeleteDialog}
@@ -903,7 +921,7 @@ const StudentsPage = () => {
                 closeDeleteDialog();
               }}
               onCancel={() => closeDeleteDialog}
-              entityName={selectedStudent?.fullName}
+              entityName={selectedStudent?.studentFullName}
             />
           </FormDialogWrapper>
         )}
@@ -913,4 +931,4 @@ const StudentsPage = () => {
   );
 };
 
-export default StudentsPage;
+export default Students;

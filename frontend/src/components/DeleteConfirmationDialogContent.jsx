@@ -24,7 +24,7 @@ const DeleteConfirmationDialogContent = ({
         }}
       >
         Are you sure you want to delete
-        {entityName ? ` ${entityName}` : " item?"} data
+        {entityName ? ` ${entityName}` : " this data"} ?
       </Typography>
       <Typography variant="body2" color="textSecondary">
         This action cannot be undone.

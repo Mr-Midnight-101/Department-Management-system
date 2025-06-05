@@ -58,7 +58,7 @@ const CourseSchema = new mongoose.Schema(
       type: Number,
       required: [true, "Course credit units are required."],
       min: [0, "Credit units cannot be negative."],
-      max: [10, "Credit units must not exceed 100."],
+      max: [10, "Credit units must not exceed 10."],
     },
   },
   { timestamps: true }

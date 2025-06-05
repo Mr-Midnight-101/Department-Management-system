@@ -17,7 +17,7 @@ export const studentRegister = async (registerData) => {
     studentContactNumber: registerData.studentContactNumber,
     studentFatherName: registerData.studentFatherName,
     studentAddress: {
-      street: registerData.studentAddress?.street,
+      ...registerData.studentAddress,
       city: registerData.studentAddress?.city,
       state: registerData.studentAddress?.state,
       country: registerData.studentAddress?.country,
@@ -28,7 +28,9 @@ export const studentRegister = async (registerData) => {
     studentType: registerData.studentType,
     studentAdmissionYear: registerData.studentAdmissionYear,
   };
-  return await axios.post("/api/student/", student).then((res) => res.data);
+
+  console.log("student just before api call", student);
+  return await axios.post("/api/student/", student);
 };
 
 export const updateStudentDetails = async (updateData) => {
@@ -53,9 +55,8 @@ export const updateStudentDetails = async (updateData) => {
     studentType: updateData.studentType,
     studentAdmissionYear: updateData.studentAdmissionYear,
   };
-  return await axios
-    .patch(`/api/student/${id}`, student)
-    .then((res) => res.data);
+  const { _id, ...data } = student;
+  return await axios.patch(`/api/student/${id}`, data).then((res) => res.data);
 };
 
 export const deleteStudent = async (student) => {

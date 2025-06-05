@@ -1,0 +1,14 @@
+setRegisterForm({
+                        ...registerForm,
+                        [e.target.name]: e.target.value,
+                      })
+
+setRegisterForm({
+                        ...registerForm,
+                        [e.target.name]: e.target.value,
+                      })
+
+setRegisterForm({
+                        ...registerForm,
+                        [e.target.name]: e.target.value,
+                      })
