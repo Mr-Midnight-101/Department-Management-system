@@ -1,29 +1,25 @@
 import multer from "multer";
-import path from "path";
 import fs from "fs";
+import path from "path";
 import { fileURLToPath } from "url";
 
-// Get the equivalent of __dirname in ES modules
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const currentFilePath = fileURLToPath(import.meta.url);
+const currentFileDir = path.dirname(currentFilePath);
+const createdDir = path.join(currentFilePath, "../../../public/temp");
 
-const storage = multer.diskStorage({
+export const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    const uploadPath = path.join(__dirname, "../public/temp");
-
-    // Check if the directory exists, if not, create it
-    if (!fs.existsSync(uploadPath)) {
-      fs.mkdirSync(uploadPath, { recursive: true });
+    if (!fs.existsSync(createdDir)) {
+      fs.mkdirSync(createdDir);
     }
-
-    cb(null, uploadPath); // Set the upload directory
+    cb(null, createdDir);
   },
   filename: function (req, file, cb) {
-    // Generate a unique filename
-    cb(null, `${Date.now()}-${file.originalname}`);
+    const uniqueSuffix = Date.now();
+    cb(null, `${uniqueSuffix}_${file.originalname}`);
   },
 });
 
-export const upload = multer({
-  storage,
-});
+export const upload = multer({ storage: storage });
+console.log("upload", upload);
+

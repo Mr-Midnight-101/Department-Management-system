@@ -29,7 +29,7 @@
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-draggable": "^4.4.6",
-    "react-hook-form": "^7.56.4",
+    "react-hook-form": "^7.57.0",
     "react-pro-sidebar": "^0.7.1",
     "react-router-dom": "^7.6.0",
     "tailwindcss": "^4.1.6",

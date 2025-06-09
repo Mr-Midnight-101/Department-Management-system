@@ -152,14 +152,13 @@ const Course = () => {
     }
     try {
       const updated = await updateCourse(course);
-      if (!updated || updated.status !== 201) {
-        setUpdateLoading(false);
+
+      if (updated.statusCode == 200) {
+        console.log(updated);
         closeUpdateDialog();
         return;
       }
     } catch (error) {
-      console.log("update error", error);
-
       setValidationError(
         error?.response?.data?.message ||
           error?.message ||
@@ -287,7 +286,7 @@ const Course = () => {
                 )}
                 <FormFieldsStack>
                   <TextField
-                    size="medium"
+                    size="small"
                     label="Course Code"
                     required
                     variant="outlined"
@@ -303,7 +302,7 @@ const Course = () => {
                     }
                   />
                   <TextField
-                    size="medium"
+                    size="small"
                     label="Course Title"
                     required
                     error={!!registerError?.courseTitleError}
@@ -319,7 +318,7 @@ const Course = () => {
                     }
                   />
                   <TextField
-                    size="medium"
+                    size="small"
                     label="Course Duration (YYYY-YYYY)"
                     required
                     select
@@ -342,7 +341,7 @@ const Course = () => {
                     ))}
                   </TextField>
                   <TextField
-                    size="medium"
+                    size="small"
                     label="Terms"
                     required
                     select
@@ -365,7 +364,7 @@ const Course = () => {
                     ))}
                   </TextField>
                   <TextField
-                    size="medium"
+                    size="small"
                     label="Credit Units"
                     required
                     variant="outlined"
@@ -441,6 +440,7 @@ const Course = () => {
               )}
               <FormFieldsStack>
                 <TextField
+                  size="small"
                   label="Course Code"
                   name="courseCode"
                   error={!!updateError?.courseCodeError}
@@ -454,6 +454,7 @@ const Course = () => {
                   }
                 />
                 <TextField
+                  size="small"
                   label="Course Title"
                   name="courseTitle"
                   error={!!updateError?.courseTitleError}
@@ -467,6 +468,7 @@ const Course = () => {
                   }
                 />
                 <TextField
+                  size="small"
                   label="Course Duration (YYYY-YYYY)"
                   name="courseDuration"
                   select
@@ -488,6 +490,7 @@ const Course = () => {
                 </TextField>
                 <TextField
                   label="Terms"
+                  size="small"
                   name="courseTerms"
                   select
                   error={!!updateError?.courseTermError}
@@ -507,6 +510,7 @@ const Course = () => {
                   ))}
                 </TextField>
                 <TextField
+                  size="small"
                   label="Credit Units"
                   name="courseCreditUnits"
                   type="number"

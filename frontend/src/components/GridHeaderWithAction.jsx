@@ -32,34 +32,35 @@ const GridHeaderWithAction = ({
       </Typography>
       <Box
         sx={{
-         
           "& :hover": { background: colors.gradient[100] },
         }}
       >
-        <IconButton
-          onClick={onButtonClick}
-          sx={{
-             color: colors.text[100],
-            "& :hover": { background: "transparent" },
-            gap: 1,
-            display: "flex",
-            alignItems: "center",
-            borderRadius: 1,
-            ...buttonSx,
-          }}
-        >
-          <AddIcon color="inherit" />
-          <Typography
-            variant="h5"
+        {onButtonClick && (
+          <IconButton
+            onClick={onButtonClick}
             sx={{
               color: colors.text[100],
-              lineHeight: 1,
-              fontWeight: { xs: 200, sm: 400 },
+              "& :hover": { background: "transparent" },
+              gap: 1,
+              display: "flex",
+              alignItems: "center",
+              borderRadius: 1,
+              ...buttonSx,
             }}
           >
-            {buttonLabel}
-          </Typography>
-        </IconButton>
+            <AddIcon color="inherit" />
+            <Typography
+              variant="h5"
+              sx={{
+                color: colors.text[100],
+                lineHeight: 1,
+                fontWeight: { xs: 200, sm: 400 },
+              }}
+            >
+              {buttonLabel}
+            </Typography>
+          </IconButton>
+        )}
       </Box>
     </Box>
   );

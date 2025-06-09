@@ -5,6 +5,7 @@ import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import Apiresponse from "../utils/Apiresponse.js";
 import jwt from "jsonwebtoken";
 import { capitalize } from "../utils/capitalize.js";
+import { log } from "console";
 
 const generateAccessAndRefreshTokens = async (teacherId) => {
   const teacher = await Teacher.findById(teacherId);
@@ -18,15 +19,18 @@ const generateAccessAndRefreshTokens = async (teacherId) => {
 };
 
 const registerTeacher = asyncHandler(async (req, res) => {
+  console.log("req.body", req.body);
+  console.log("req.file", req.file?.path);
+
   let {
     teacherFullName,
     teacherEmail,
     teacherUsername,
     teacherPassword,
     teacherId,
-    teacherAvatar,
     teacherAssignedSubjects,
     teacherContactInfo,
+    teacherAvatar,
   } = req.body;
 
   if (
@@ -46,7 +50,6 @@ const registerTeacher = asyncHandler(async (req, res) => {
   ) {
     throw new ApiError(400, "One or more required fields cannot be empty.");
   }
-
   const existedTeacher = await Teacher.findOne({
     $or: [
       { teacherUsername },
@@ -113,7 +116,7 @@ const registerTeacher = asyncHandler(async (req, res) => {
 const loginTeacher = asyncHandler(async (req, res) => {
   const { teacherUsername, teacherEmail, teacherPassword } = req.body;
 
-  if ((!teacherUsername && !teacherEmail) || !teacherPassword) {
+  if ((!teacherUsername || !teacherEmail) && !teacherPassword) {
     throw new ApiError(
       400,
       "Please provide either username or email and the password."

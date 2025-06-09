@@ -18,7 +18,7 @@ const FormDialogWrapper = ({
       slotProps={{
         paper: {
           sx: {
-            width: { xs: "80vw", sm: "40vw", md: "40vw" },
+            width: { xs: "80vw", sm: "50vw", md: "40vw" },
             height: { xs: "80vh", sm: "70vh", md: "60vh" },
             p: 2,
             ...sx,

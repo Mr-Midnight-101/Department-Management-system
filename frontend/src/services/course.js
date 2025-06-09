@@ -39,3 +39,8 @@ export const updateCourse = async (updateData) => {
   };
   return await axios.patch(`/api/course/${id}`, course).then((res) => res.data);
 };
+
+export const courseList = async () => {
+  const list = await axios.get("/api/course/list");
+  return list;
+};

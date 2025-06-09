@@ -23,7 +23,7 @@ const CourseSchema = new mongoose.Schema(
       unique: true,
       trim: true,
       minlength: [3, "Course title must be at least 3 characters long."],
-      maxlength: [100, "Course title must not exceed 100 characters."],
+      maxlength: [30, "Course title must not exceed 30 characters."],
       match: [
         /^[A-Za-z ]+$/,
         "Name must contain only letters (A-Z, a-z) and spaces.",

@@ -198,6 +198,19 @@ const courseCount = asyncHandler(async (req, res) => {
     .json(new Apiresponse(200, count, "Course count fetched successfully."));
 });
 
+// ⭐ course list
+const courseList = asyncHandler(async (req, res) => {
+  const courses = await Course.find().select("courseCode");
+
+  if (!courses || courses.length === 0) {
+    throw ApiError(404, "No courses found");
+  }
+
+  return res
+    .status(200)
+    .json(new Apiresponse(200, courses, "Course list fetched successfully"));
+});
+
 // Export all relevant controller functions
 export {
   addCourse,
@@ -206,4 +219,5 @@ export {
   updateCourse,
   deleteCourse,
   courseCount,
+  courseList,
 };

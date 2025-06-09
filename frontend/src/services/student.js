@@ -9,13 +9,13 @@ export const getStudents = async () =>
 
 export const studentRegister = async (registerData) => {
   const student = {
-    studentFullName: registerData.studentFullName,
-    studentDateOfBirth: registerData.studentDateOfBirth,
-    studentEnrollmentNumber: registerData.studentEnrollmentNumber,
-    studentRollNumber: registerData.studentRollNumber,
-    studentEmail: registerData.studentEmail,
-    studentContactNumber: registerData.studentContactNumber,
-    studentFatherName: registerData.studentFatherName,
+    studentFullName: registerData?.studentFullName,
+    studentDateOfBirth: registerData?.studentDateOfBirth,
+    studentEnrollmentNumber: registerData?.studentEnrollmentNumber,
+    studentRollNumber: registerData?.studentRollNumber,
+    studentEmail: registerData?.studentEmail,
+    studentContactNumber: registerData?.studentContactNumber,
+    studentFatherName: registerData?.studentFatherName,
     studentAddress: {
       ...registerData.studentAddress,
       city: registerData.studentAddress?.city,
@@ -23,10 +23,10 @@ export const studentRegister = async (registerData) => {
       country: registerData.studentAddress?.country,
       postalCode: registerData.studentAddress?.postalCode,
     },
-    studentCategory: registerData.studentCategory,
-    studentCurrentCourseId: registerData.studentCurrentCourseId,
-    studentType: registerData.studentType,
-    studentAdmissionYear: registerData.studentAdmissionYear,
+    studentCategory: registerData?.studentCategory,
+    studentCurrentCourseId: registerData?.studentCurrentCourseId,
+    studentType: registerData?.studentType,
+    studentAdmissionYear: registerData?.studentAdmissionYear,
   };
 
   console.log("student just before api call", student);
@@ -36,24 +36,24 @@ export const studentRegister = async (registerData) => {
 export const updateStudentDetails = async (updateData) => {
   const id = updateData?._id;
   const student = {
-    studentFullName: updateData.studentFullName,
-    studentDateOfBirth: updateData.studentDateOfBirth,
-    studentEnrollmentNumber: updateData.studentEnrollmentNumber,
-    studentRollNumber: updateData.studentRollNumber,
-    studentEmail: updateData.studentEmail,
-    studentContactNumber: updateData.studentContactNumber,
-    studentFatherName: updateData.studentFatherName,
+    studentFullName: updateData?.studentFullName,
+    studentDateOfBirth: updateData?.studentDateOfBirth,
+    studentEnrollmentNumber: updateData?.studentEnrollmentNumber,
+    studentRollNumber: updateData?.studentRollNumber,
+    studentEmail: updateData?.studentEmail,
+    studentContactNumber: updateData?.studentContactNumber,
+    studentFatherName: updateData?.studentFatherName,
     studentAddress: {
-      street: updateData.studentAddress?.street,
-      city: updateData.studentAddress?.city,
-      state: updateData.studentAddress?.state,
-      country: updateData.studentAddress?.country,
-      postalCode: updateData.studentAddress?.postalCode,
+      street: updateData?.studentAddress?.street,
+      city: updateData?.studentAddress?.city,
+      state: updateData?.studentAddress?.state,
+      country: updateData?.studentAddress?.country,
+      postalCode: updateData?.studentAddress?.postalCode,
     },
-    studentCategory: updateData.studentCategory,
-    studentCurrentCourseId: updateData.studentCurrentCourseId,
-    studentType: updateData.studentType,
-    studentAdmissionYear: updateData.studentAdmissionYear,
+    studentCategory: updateData?.studentCategory,
+    studentCurrentCourseId: updateData?.studentCurrentCourseId,
+    studentType: updateData?.studentType,
+    studentAdmissionYear: updateData?.studentAdmissionYear,
   };
   const { _id, ...data } = student;
   return await axios.patch(`/api/student/${id}`, data).then((res) => res.data);

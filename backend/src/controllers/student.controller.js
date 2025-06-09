@@ -8,7 +8,7 @@ import { capitalize } from "../utils/capitalize.js";
 const populateStudent = (query) => {
   return query.populate({
     path: "studentCurrentCourseId",
-    select: "courseTitle _id",
+    select: "courseCode _id",
   });
 };
 
@@ -41,7 +41,11 @@ const addStudent = asyncHandler(async (req, res) => {
     throw new ApiError(400, `All required fields must be filled.`);
   }
 
-  if ([studentType, studentCategory, studentAdmissionYear].some((field) => field == null)) {
+  if (
+    [studentType, studentCategory, studentAdmissionYear].some(
+      (field) => field == null
+    )
+  ) {
     throw new ApiError(400, `All required fields must be filled.`);
   }
 
@@ -54,8 +58,18 @@ const addStudent = asyncHandler(async (req, res) => {
       $match: {
         $expr: {
           $or: [
-            { $eq: ["$studentEnrollmentNumber", studentEnrollmentNumber.trim().toUpperCase()] },
-            { $eq: ["$studentRollNumber", studentRollNumber.trim().toUpperCase()] },
+            {
+              $eq: [
+                "$studentEnrollmentNumber",
+                studentEnrollmentNumber.trim().toUpperCase(),
+              ],
+            },
+            {
+              $eq: [
+                "$studentRollNumber",
+                studentRollNumber.trim().toUpperCase(),
+              ],
+            },
             { $eq: ["$studentEmail", studentEmail.trim().toLowerCase()] },
             { $eq: ["$studentContactNumber", studentContactNumber.trim()] },
           ],
@@ -68,12 +82,20 @@ const addStudent = asyncHandler(async (req, res) => {
     const match = existStudent[0];
     let errorMessage = "A student with these details already exists.";
 
-    if (match.studentEnrollmentNumber === studentEnrollmentNumber.toUpperCase()) {
-      errorMessage = `Student with Enrollment Number '${studentEnrollmentNumber.trim().toUpperCase()}' already exists.`;
+    if (
+      match.studentEnrollmentNumber === studentEnrollmentNumber.toUpperCase()
+    ) {
+      errorMessage = `Student with Enrollment Number '${studentEnrollmentNumber
+        .trim()
+        .toUpperCase()}' already exists.`;
     } else if (match.studentRollNumber === studentRollNumber.toUpperCase()) {
-      errorMessage = `Student with Roll Number '${studentRollNumber.trim().toUpperCase()}' already exists.`;
+      errorMessage = `Student with Roll Number '${studentRollNumber
+        .trim()
+        .toUpperCase()}' already exists.`;
     } else if (match.studentEmail === studentEmail.toLowerCase()) {
-      errorMessage = `Student with Email '${studentEmail.trim().toLowerCase()}' already exists.`;
+      errorMessage = `Student with Email '${studentEmail
+        .trim()
+        .toLowerCase()}' already exists.`;
     } else if (match.studentContactNumber === studentContactNumber.trim()) {
       errorMessage = `Student with Contact Number '${studentContactNumber.trim()}' already exists.`;
     }
@@ -90,14 +112,13 @@ const addStudent = asyncHandler(async (req, res) => {
     studentContactNumber: studentContactNumber.trim(),
     studentFatherName: capitalize(studentFatherName.trim()),
     studentAddress: {
-      street: studentAddress?.street?.trim() || "",
       city: capitalize(studentAddress?.city?.trim()) || "",
       state: capitalize(studentAddress?.state?.trim()) || "",
       postalCode: studentAddress?.postalCode?.trim() || "",
       country: studentAddress?.country?.trim().toUpperCase() || "INDIA",
     },
     studentCategory: studentCategory || "GEN",
-    studentCurrentCourseId: studentCurrentCourseId || null,
+    studentCurrentCourseId: studentCurrentCourseId || "",
     studentType: studentType || "Regular",
     studentAdmissionYear: studentAdmissionYear || new Date().getFullYear(),
   });
@@ -181,7 +202,10 @@ const updateStudent = asyncHandler(async (req, res) => {
     throw new ApiError(400, "No valid fields provided for update.");
   }
 
-  if (studentDateOfBirth !== undefined && !dayjs(studentDateOfBirth).isValid()) {
+  if (
+    studentDateOfBirth !== undefined &&
+    !dayjs(studentDateOfBirth).isValid()
+  ) {
     throw new ApiError(400, "Invalid date of birth format.");
   }
 
@@ -206,28 +230,41 @@ const updateStudent = asyncHandler(async (req, res) => {
       studentId,
       {
         $set: {
-          ...(studentFullName?.trim() && { studentFullName: capitalize(studentFullName.trim()) }),
+          ...(studentFullName?.trim() && {
+            studentFullName: capitalize(studentFullName.trim()),
+          }),
           ...(studentDateOfBirth && { studentDateOfBirth }),
           ...(studentEnrollmentNumber?.trim() && {
-            studentEnrollmentNumber: studentEnrollmentNumber.trim().toUpperCase(),
+            studentEnrollmentNumber: studentEnrollmentNumber
+              .trim()
+              .toUpperCase(),
           }),
-          ...(studentRollNumber?.trim() && { studentRollNumber: studentRollNumber.trim().toUpperCase() }),
-          ...(studentEmail?.trim() && { studentEmail: studentEmail.trim().toLowerCase() }),
-          ...(studentContactNumber?.trim() && { studentContactNumber: studentContactNumber.trim() }),
+          ...(studentRollNumber?.trim() && {
+            studentRollNumber: studentRollNumber.trim().toUpperCase(),
+          }),
+          ...(studentEmail?.trim() && {
+            studentEmail: studentEmail.trim().toLowerCase(),
+          }),
+          ...(studentContactNumber?.trim() && {
+            studentContactNumber: studentContactNumber.trim(),
+          }),
           ...(studentFatherName?.trim() && {
             studentFatherName: capitalize(studentFatherName.trim()),
           }),
           ...(studentAddress && {
             studentAddress: {
-              street: studentAddress.street?.trim().toLowerCase() || "",
               city: capitalize(studentAddress.city?.trim()) || "",
               state: capitalize(studentAddress.state?.trim()) || "",
               postalCode: studentAddress.postalCode?.trim() || "",
               country: studentAddress.country?.trim().toUpperCase() || "INDIA",
             },
           }),
-          ...(studentCategory?.trim() && { studentCategory }),
-          ...((studentCurrentCourseId && { studentCurrentCourseId }) || ""),
+          ...(studentCategory && { studentCategory }),
+          ...(studentType && { studentType }),
+          ...((studentCurrentCourseId && {
+            studentCurrentCourseId,
+          }) ||
+            ""),
           ...(studentAdmissionYear !== undefined && { studentAdmissionYear }),
         },
       },

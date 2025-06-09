@@ -25,7 +25,9 @@ teacherRoutes.route("/count").get(teacherCount);
 teacherRoutes.route("/").get(getAllTeachers);
 
 // Route for teacher registration with avatar upload middleware
-teacherRoutes.route("/register").post(upload.single("avatar"), registerTeacher);
+teacherRoutes
+  .route("/register")
+  .post(upload.single("teacherAvatar"), registerTeacher);
 
 // Route for teacher login
 teacherRoutes.route("/login").post(loginTeacher);

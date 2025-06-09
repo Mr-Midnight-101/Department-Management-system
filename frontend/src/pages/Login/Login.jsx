@@ -1,159 +1,212 @@
 /* eslint-disable no-unused-vars */
-import React, { useContext } from "react";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import axios from "axios";
-import { Box, InputBase, Typography, Button, useTheme } from "@mui/material";
-import { getColorTokens } from "../../theme/theme.js";
+import { Box, Button, TextField, Typography, useTheme } from "@mui/material";
+import { getColorTokens } from "../../theme/theme";
+import { useState } from "react";
+import { loginTeacher } from "../../services/teacher";
+import LogoSync from "../../components/LogoSync";
 import { useNavigate } from "react-router-dom";
-import { AuthContext } from "./AuthContext.jsx"; // your auth context
-
-const schema = z.object({
-  username: z.string().nonempty("Username is required"),
-  email: z.string().email("Invalid email").nonempty("Email is required"),
-  password: z.string(),
-});
 
 const Login = () => {
-  const theme = useTheme();
-  const colors = getColorTokens(theme.palette.mode);
-  const { login } = useContext(AuthContext); // context to save user/token
+  const colors = getColorTokens(useTheme().palette.mode);
   const navigate = useNavigate();
+  const [user, setUser] = useState({});
+  const [isAuthenticated, setAuthenticated] = useState("");
+  const [isEmailLogin, setEmailLogin] = useState(false);
+  const [isLoginError, setLoginError] = useState("");
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm({
-    resolver: zodResolver(schema),
-  });
+  const handlerLogin = async (loginData) => {
+    setLoginError("");
+    setAuthenticated("");
+    let teacher;
+    if (loginData?.teacherEmail && isEmailLogin) {
+      teacher = {
+        ...loginData,
+        teacherUsername: null,
+        teacherEmail: loginData?.teacherEmail,
+        teacherPassword: loginData?.teacherPassword,
+      };
+    } else {
+      teacher = {
+        ...loginData,
+        teacherEmail: null,
+        teacherUsername: loginData?.teacherUsername,
+        teacherPassword: loginData?.teacherPassword,
+      };
+    }
+    console.log(teacher);
 
-  const onSubmit = async (data) => {
     try {
-      const res = await axios.post("/api/auth/login", data);
-
-      // backend sends back JWT token in res.data.token
-      const token = res.data.token;
-
-      // Save token locally (for example, localStorage)
-      localStorage.setItem("token", token);
-
-      // Update auth state (could also decode token for user info)
-      login({ token });
-
-      // Redirect to dashboard after login success
-      navigate("/");
+      const logged = await loginTeacher(teacher);
+      console.log("response", logged);
+      if (logged?.status == 200) {
+        // localStorage.setItem("accessToken");
+        setAuthenticated(logged?.data?.message);
+        navigate("/");
+      }
     } catch (error) {
-      alert(error.response?.data?.message || "Login failed");
+      console.log(error);
+      setLoginError(error.response?.data?.message || "Login failed");
     }
   };
+
+  const handleSignUp = () => {
+    navigate("/register");
+  };
+
   return (
     <Box
+      position="absolute"
+      overflow="hidden"
       display="flex"
       justifyContent="center"
       alignItems="center"
-      minHeight="100vh"
-      sx={{ bgcolor: colors.black[800] }} // Use your theme's background
+      width="100%"
+      height="100%"
+      flexDirection="column"
     >
-      <Box
-        component="form"
-        onSubmit={handleSubmit(onSubmit)}
-        noValidate
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          gap: 2,
-          p: 4,
-          bgcolor: colors.black[700], // Card background
-          borderRadius: 2,
-          width: "100%",
-          maxWidth: 400,
-          boxShadow: 3,
-        }}
-      >
-        <Typography variant="h4" textAlign="center" color={colors.red[400]}>
-          Login
-        </Typography>
+      <Box mt={2}>
+        <LogoSync />
+      </Box>
 
-        {/* Username */}
-        <Box>
-          <Typography color={colors.white[100]}>Username</Typography>
-          <InputBase
-            fullWidth
-            {...register("username")}
-            sx={{
-              bgcolor: colors.grey[800],
-              borderRadius: 1,
-              px: 2,
-              py: 1,
-              color: colors.white[100],
-            }}
-          />
-          {errors.username && (
-            <Typography color={colors.red[400]} fontSize="0.875rem">
-              {errors.username.message}
-            </Typography>
-          )}
-        </Box>
-
-        {/* Email */}
-        <Box>
-          <Typography color={colors.white[100]}>Email</Typography>
-          <InputBase
-            fullWidth
-            type="email"
-            {...register("email")}
-            sx={{
-              bgcolor: colors.grey[800],
-              borderRadius: 1,
-              px: 2,
-              py: 1,
-              color: colors.white[100],
-            }}
-          />
-          {errors.email && (
-            <Typography color={colors.red[400]} fontSize="0.875rem">
-              {errors.email.message}
-            </Typography>
-          )}
-        </Box>
-
-        {/* Password */}
-        <Box>
-          <Typography color={colors.white[100]}>Password</Typography>
-          <InputBase
-            fullWidth
-            type="password"
-            {...register("password")}
-            sx={{
-              bgcolor: colors.grey[800],
-              borderRadius: 1,
-              px: 2,
-              py: 1,
-              color: colors.white[100],
-            }}
-          />
-          {errors.password && (
-            <Typography color={colors.red[400]} fontSize="0.875rem">
-              {errors.password.message}
-            </Typography>
-          )}
-        </Box>
-
-        <Button
-          type="submit"
-          variant="contained"
+      {isLoginError && (
+        <Box
           sx={{
-            mt: 2,
-            bgcolor: colors.red[500],
-            color: colors.white[100],
-            "&:hover": { bgcolor: colors.red[700] },
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            // backgroundColor: "green",
+            width: "80%",
+            textAlign: "center",
           }}
-          disabled={isSubmitting}
         >
-          {isSubmitting ? "Logging in..." : "Login"}
-        </Button>
+          <Typography color="error" variant="h5">
+            {isLoginError}
+          </Typography>
+        </Box>
+      )}
+      {isAuthenticated && (
+        <Box display="flex" justifyContent="center" alignItems="center">
+          <Typography color="success" variant="h5">
+            {isAuthenticated}
+          </Typography>
+        </Box>
+      )}
+
+      <Box
+        maxWidth="480px"
+        maxHeight="480px"
+        p={{ xs: 2, lg: 4 }}
+        gap={4}
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        flexDirection="column"
+      >
+        <Box display="flex" justifyContent="center" alignItems="center">
+          <Typography variant="h2" fontWeight="600">
+            Login to your account
+          </Typography>
+        </Box>
+
+        <Box
+          display="flex"
+          justifyContent="center"
+          alignItems="center"
+          flexDirection="column"
+          gap={4}
+        >
+          <Box
+            display="flex"
+            flexDirection="column"
+            gap={2}
+            width={{ xs: "240px", sm: "400px" }}
+          >
+            {isEmailLogin ? (
+              <TextField
+                label="Email"
+                required
+                variant="outlined"
+                name="teacherEmail"
+                value={user.teacherEmail || ""}
+                onChange={(e) =>
+                  setUser({ ...user, [e.target.name]: e.target.value })
+                }
+              />
+            ) : (
+              <TextField
+                label="Username"
+                required
+                variant="outlined"
+                name="teacherUsername"
+                value={user.teacherUsername || ""}
+                onChange={(e) =>
+                  setUser({ ...user, [e.target.name]: e.target.value })
+                }
+              />
+            )}
+
+            <TextField
+              label="Password"
+              required
+              variant="outlined"
+              name="teacherPassword"
+              value={user.teacherPassword || ""}
+              onChange={(e) =>
+                setUser({ ...user, [e.target.name]: e.target.value })
+              }
+            />
+          </Box>
+
+          <Button
+            sx={{
+              m: 0,
+              p: 0,
+              "&:hover": {
+                background: colors.gradient[100],
+              },
+              background: "rgba(255, 255, 255, 0.03)",
+              boxShadow: "0 8px 32px 0 rgba(31, 38, 135, 0.37)",
+              backdropFilter: "blur(0.2px)",
+              borderRadius: "4px",
+              border: "1px solid rgba(255, 255, 255, 0.15)",
+            }}
+            onClick={() => {
+              handlerLogin(user);
+            }}
+          >
+            <Typography
+              sx={{ p: 1.1, width: "180px" }}
+              variant="h5"
+              color={colors.text[100]}
+            >
+              Login
+            </Typography>
+          </Button>
+        </Box>
+
+        <Box display="flex" justifyContent="center" alignItems="center">
+          <Typography color="text" variant="h5">
+            Don't have an account?
+          </Typography>
+          <Button onClick={handleSignUp}>
+            <Typography color="pink" variant="h5">
+              Sign up
+            </Typography>
+          </Button>
+        </Box>
+
+        <Box display="flex" justifyContent="center" alignItems="center">
+          <Button
+            onClick={() => {
+              setEmailLogin((prev) => !prev);
+              setUser({});
+            }}
+          >
+            <Typography color="pink" variant="h5">
+              {isEmailLogin ? "Login using username" : "Login using email"}
+            </Typography>
+          </Button>
+        </Box>
       </Box>
     </Box>
   );

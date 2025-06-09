@@ -37,6 +37,7 @@ import PageSectionWrapper from "../../components/PageSectionWrapper.jsx";
 import FormDialogWrapper from "../../components/FormDialogWrapper.jsx";
 import FormFieldsStack from "../../components/FormFieldsStack.jsx";
 import DeleteConfirmationDialogContent from "../../components/DeleteConfirmationDialogContent.jsx";
+import { courseList } from "../../services/course.js";
 const Students = () => {
   //theme setup
   const theme = useTheme();
@@ -45,7 +46,20 @@ const Students = () => {
   // Data and dialog state
   const [refreshTable, setRefreshTable] = useState(false);
 
-  //!____________________________________________________Fetch students
+  // ⭐ course list fetching
+  const [courseChoices, setCourseChoices] = useState([]);
+  const [courseError, setCourseError] = useState("");
+  const fetchCourseList = useCallback(async () => {
+    try {
+      const list = await courseList();
+      const mappedlist = list?.data?.data;
+      setCourseChoices(mappedlist);
+    } catch (error) {
+      setCourseError(error?.response?.data?.message);
+    }
+  }, []);
+
+  // ⭐ Fetch students
   const [isDatafetched, setDatafetched] = useState(false);
   const [isfetchError, setIsFetchError] = useState(null);
   const [students, setStudents] = useState([]);
@@ -69,8 +83,9 @@ const Students = () => {
   }, []);
 
   useEffect(() => {
+    fetchCourseList();
     fetchStudents();
-  }, [fetchStudents, refreshTable]);
+  }, [fetchStudents, refreshTable, fetchCourseList]);
 
   // Register Dialog open/close handlers
   const openRegisterDialog = () => {
@@ -80,25 +95,6 @@ const Students = () => {
   const closeRegisterDialog = () => {
     setRegisterDialogOpen(false);
     setRegisterError({});
-    setRefreshTable((prev) => !prev);
-  };
-
-  //!______________________________________________________update student
-  // Update dialog state
-  const [selectedStudent, setSelectedStudent] = useState(null);
-  const [isUpdateDialogOpen, setUpdateDialogOpen] = useState(false);
-
-  //  Error and loading state for updation
-  const [updateError, setUpdateError] = useState("");
-  const [updateLoading, setUpdateLoading] = useState(false);
-
-  // update Dialog open/close handlers
-  const openUpdateDialog = (student) => {
-    setSelectedStudent(student);
-    setUpdateDialogOpen(true);
-  };
-  const closeUpdateDialog = () => {
-    setUpdateDialogOpen(false);
     setRefreshTable((prev) => !prev);
   };
 
@@ -127,15 +123,12 @@ const Students = () => {
   const [controllerError, setControllerError] = useState("");
   // Register Handler
   const handleRegisterStudent = async (formData) => {
-    console.log("handle register form: ", formData);
     setRegisterError({});
     setRegisterLoading(true);
     const validationMsg = validateStudentForm(formData);
-    console.log("after validation return output: ", validationMsg);
     if (validationMsg && Object.keys(validationMsg).length > 0) {
       setRegisterError(validationMsg);
       setRegisterLoading(false);
-      closeUpdateDialog();
       return;
     }
     try {
@@ -143,39 +136,55 @@ const Students = () => {
       const response = await studentRegister(formData);
       if (response.status === 201) {
         setRegisterError({});
+        setRefreshTable(true);
         closeRegisterDialog();
       }
     } catch (error) {
       setControllerError(error?.response?.data?.message);
-      console.log(error);
-      console.log(error?.response);
-      console.log(error?.response?.data);
-      console.log(error?.response?.data?.message);
     } finally {
       setRegisterLoading(false);
     }
   };
 
   // Update Handler
+  //!______________________________________________________update student
+  // Update dialog state
+  const [selectedStudent, setSelectedStudent] = useState({});
+  const [isUpdateDialogOpen, setUpdateDialogOpen] = useState(false);
+
+  //  Error and loading state for updation
+  const [updateError, setUpdateError] = useState("");
+  const [updateLoading, setUpdateLoading] = useState(false);
+
+  // update Dialog open/close handlers
+  const openUpdateDialog = (student) => {
+    setSelectedStudent({
+      ...student,
+      studentCurrentCourseId: student?.studentCurrentCourseId?._id || "",
+    });
+    setUpdateDialogOpen(true);
+  };
+  const closeUpdateDialog = () => {
+    setSelectedStudent({});
+    setUpdateDialogOpen(false);
+    setRefreshTable((prev) => !prev);
+  };
   const handleUpdateStudent = async (student) => {
     setUpdateError("");
     setUpdateLoading(true);
-    console.log("Handler called");
-    console.log(typeof student?.studentAdmissionYear);
-    console.log("Handler finished");
     const validationMsg = validateStudentForm(student);
     if (validationMsg && Object.keys(validationMsg).length > 0) {
       setUpdateError(validationMsg);
       setUpdateLoading(false);
-      closeUpdateDialog();
       return;
     }
     try {
       const updated = await updateStudentDetails(student);
-      if (!updated) {
-        setUpdateError("Failed to update student");
-        setUpdateLoading(false);
-        return;
+      console.log("REsponse of api call", updated);
+
+      if (updated.status === 201) {
+        setRefreshTable(true);
+        setUpdateError({});
       }
       closeUpdateDialog(); // This will toggle refreshTable
     } catch (error) {
@@ -208,7 +217,7 @@ const Students = () => {
       headerAlign: "center",
       align: "left",
       width: 60,
-      maxWidth: 100,
+      maxWidth: 80,
     },
     {
       field: "studentFullName",
@@ -216,7 +225,7 @@ const Students = () => {
       headerAlign: "center",
       align: "left",
       width: 100,
-      maxWidth: 140,
+      maxWidth: 120,
     },
     {
       field: "studentDateOfBirth",
@@ -231,24 +240,38 @@ const Students = () => {
       headerName: "Enrollment No.",
       headerAlign: "center",
       align: "left",
-      width: 160,
-      maxWidth: 180,
+      width: 120,
+      maxWidth: 140,
     },
     {
       field: "studentRollNumber",
       headerName: "Roll No.",
       headerAlign: "center",
       align: "left",
-      maxWidth: 180,
-      Width: 160,
+      maxWidth: 140,
+      Width: 120,
+    },
+    {
+      field: "studentCurrentCourseId",
+      headerName: "Course",
+      headerAlign: "center",
+      align: "left",
+      maxWidth: 140,
+      Width: 120,
+      valueGetter: (params) => {
+        if (!params) {
+          return "N/A";
+        }
+        return params?.courseCode;
+      },
     },
     {
       field: "studentEmail",
       headerName: "Email",
       headerAlign: "center",
       align: "left",
-      maxWidth: 160,
-      Width: 160,
+      maxWidth: 120,
+      Width: 120,
     },
     {
       field: "studentContactNumber",
@@ -256,14 +279,14 @@ const Students = () => {
       headerAlign: "center",
       align: "left",
       maxWidth: 160,
-      Width: 160,
+      Width: 120,
     },
     {
       field: "studentFatherName",
       headerName: "Father's Name",
       headerAlign: "center",
       align: "left",
-      maxWidth: 180,
+      maxWidth: 120,
     },
     {
       field: "city",
@@ -272,57 +295,28 @@ const Students = () => {
       align: "left",
       maxWidth: 120,
     },
-    {
-      field: "state",
-      headerName: "State",
-      headerAlign: "center",
-      align: "left",
-      maxWidth: 120,
-    },
-    // {
-    //   field: "country",
-    //   headerName: "Country",
-    //   headerAlign: "center",
-    //   align: "left",
-    //   maxWidth: 120,
-    // },
-    // {
-    //   field: "postalCode",
-    //   headerName: "Postal Code",
-    //   headerAlign: "center",
-    //   align: "left",
-    //   maxWidth: 120,
-    // },
+
     {
       field: "studentCategory",
       headerName: "Category",
       headerAlign: "center",
       align: "left",
-      maxWidth: 140,
+      maxWidth: 100,
     },
     {
       field: "studentType",
       headerName: "Type",
       headerAlign: "center",
       align: "left",
-      maxWidth: 140,
-    },
-    {
-      field: "studentAdmissionYear",
-      headerName: "Admission Year",
-      headerAlign: "center",
-      align: "center",
-      maxWidth: 80,
-      width: 60,
-      marginLeft: 2,
+      maxWidth: 100,
     },
     {
       field: "action",
       headerName: "Actions",
       headerAlign: "center",
       align: "center",
-      minWidth: 140,
-      maxWidth: 180,
+      minWidth: 120,
+      maxWidth: 140,
       renderCell: (params) => {
         const selectedRow = params.row;
         return (
@@ -348,6 +342,9 @@ const Students = () => {
 
         {/* DataGrid */}
         <GridWrapper
+          sx={{
+            width: "90vw",
+          }}
           isDatafetched={isDatafetched}
           rows={students}
           columns={columns}
@@ -374,7 +371,7 @@ const Students = () => {
 
                 <FormFieldsStack>
                   <TextField
-                    size="medium"
+                    size="small"
                     label="Full Name"
                     required
                     error={!!registerError?.nameError}
@@ -390,7 +387,7 @@ const Students = () => {
                     }
                   />
                   <TextField
-                    size="medium"
+                    size="small"
                     label="Date of birth"
                     type="date"
                     required
@@ -410,7 +407,7 @@ const Students = () => {
                     }
                   />
                   <TextField
-                    size="medium"
+                    size="small"
                     label="Enrollment No."
                     required
                     error={!!registerError?.enrollError}
@@ -426,7 +423,38 @@ const Students = () => {
                     }
                   />
                   <TextField
-                    size="medium"
+                    size="small"
+                    label="Course"
+                    required
+                    select
+                    error={!!registerError?.courseError} // Assuming registerError.courseError exists for validation
+                    helperText={
+                      registerError?.courseError ||
+                      (courseChoices.length === 0 && !courseError
+                        ? "No courses available"
+                        : "")
+                    }
+                    variant="outlined"
+                    name="studentCurrentCourseId"
+                    value={registerForm?.studentCurrentCourseId || ""}
+                    onChange={(e) => {
+                      setRegisterForm((prev) => ({
+                        ...prev,
+                        studentCurrentCourseId: e.target.value,
+                      }));
+                    }}
+                    disabled={courseChoices.length === 0 && !courseError}
+                  >
+                    {/* IMPORTANT: Only MenuItem children allowed */}
+                    {courseChoices.length > 0 &&
+                      courseChoices.map((c) => (
+                        <MenuItem key={c?._id} value={c?._id}>
+                          {c?.courseCode}
+                        </MenuItem>
+                      ))}
+                  </TextField>
+                  <TextField
+                    size="small"
                     label="Roll No."
                     required
                     error={!!registerError?.rollError}
@@ -442,7 +470,7 @@ const Students = () => {
                     }
                   />
                   <TextField
-                    size="medium"
+                    size="small"
                     type="email"
                     label="Email ID"
                     required
@@ -459,7 +487,7 @@ const Students = () => {
                     }
                   />
                   <TextField
-                    size="medium"
+                    size="small"
                     label="Contact"
                     required
                     error={!!registerError?.contactError}
@@ -475,7 +503,7 @@ const Students = () => {
                     }
                   />
                   <TextField
-                    size="medium"
+                    size="small"
                     label="Father's Name"
                     error={!!registerError?.fnameError}
                     helperText={registerError?.fnameError}
@@ -491,7 +519,7 @@ const Students = () => {
                     }
                   />
                   <TextField
-                    size="medium"
+                    size="small"
                     label="City"
                     required
                     variant="outlined"
@@ -510,7 +538,7 @@ const Students = () => {
                     }
                   />
                   <TextField
-                    size="medium"
+                    size="small"
                     label="State"
                     required
                     error={!!registerError?.stateError}
@@ -529,7 +557,7 @@ const Students = () => {
                     }
                   />
                   <TextField
-                    size="medium"
+                    size="small"
                     label="Country"
                     required
                     variant="outlined"
@@ -549,7 +577,7 @@ const Students = () => {
                   />
                   <TextField
                     require="true"
-                    size="medium"
+                    size="small"
                     label="Postal Code"
                     variant="outlined"
                     value={registerForm?.studentAddress?.postalCode || ""}
@@ -567,7 +595,7 @@ const Students = () => {
                     }
                   />
                   <TextField
-                    size="medium"
+                    size="small"
                     label="Category"
                     required
                     select
@@ -591,7 +619,7 @@ const Students = () => {
                   </TextField>
 
                   <TextField
-                    size="medium"
+                    size="small"
                     label="Student Type"
                     required
                     error={!!registerError?.studentTypeError}
@@ -599,7 +627,7 @@ const Students = () => {
                     select
                     variant="outlined"
                     name="studentType"
-                    value={registerForm.studentType || ""}
+                    value={registerForm?.studentType || ""}
                     onChange={(e) =>
                       setRegisterForm({
                         ...registerForm,
@@ -614,7 +642,7 @@ const Students = () => {
                     ))}
                   </TextField>
                   <TextField
-                    size="medium"
+                    size="small"
                     type="number"
                     label="Admission Year"
                     required
@@ -691,6 +719,7 @@ const Students = () => {
               )}
               <FormFieldsStack>
                 <TextField
+                  size="small"
                   label="Full Name"
                   name="studentFullName"
                   value={selectedStudent?.studentFullName || ""}
@@ -702,6 +731,7 @@ const Students = () => {
                   }
                 />
                 <TextField
+                  size="small"
                   type="Date of birth"
                   label="DOB"
                   name="studentDateOfBirth"
@@ -717,6 +747,7 @@ const Students = () => {
                   }
                 />
                 <TextField
+                  size="small"
                   label="Enrollment"
                   name="studentEnrollmentNumber"
                   value={selectedStudent?.studentEnrollmentNumber || ""}
@@ -728,7 +759,44 @@ const Students = () => {
                   }
                 />
                 <TextField
+                  size="small"
+                  label="Course"
+                  required
+                  select
+                  error={!!updateError?.courseError} // Assuming updateError.courseError exists for validation
+                  helperText={
+                    updateError?.courseError ||
+                    (courseChoices.length === 0 && !courseError
+                      ? "No courses available"
+                      : "")
+                  }
+                  variant="outlined"
+                  name="courseCode"
+                  disabled={courseChoices.length === 0 && !courseError}
+                  value={selectedStudent?.studentCurrentCourseId || ""}
+                  onChange={(e) => {
+                    setSelectedStudent(
+                      (prev) => (
+                        console.log(prev),
+                        {
+                          ...prev,
+                          studentCurrentCourseId: e.target.value,
+                        }
+                      )
+                    );
+                  }}
+                >
+                  {/* IMPORTANT: Only MenuItem children allowed */}
+                  {courseChoices.length > 0 &&
+                    courseChoices.map((c) => (
+                      <MenuItem key={c?._id} value={c?._id}>
+                        {c?.courseCode}
+                      </MenuItem>
+                    ))}
+                </TextField>
+                <TextField
                   label="Roll no."
+                  size="small"
                   name="studentRollNumber"
                   value={selectedStudent?.studentRollNumber || ""}
                   onChange={(e) =>
@@ -740,6 +808,7 @@ const Students = () => {
                 />
                 <TextField
                   label="Email"
+                  size="small"
                   name="studentEmail"
                   value={selectedStudent?.studentEmail || ""}
                   onChange={(e) =>
@@ -751,6 +820,7 @@ const Students = () => {
                 />
                 <TextField
                   label="Contact Info"
+                  size="small"
                   name="studentContactNumber"
                   value={selectedStudent?.studentContactNumber || ""}
                   onChange={(e) =>
@@ -762,6 +832,7 @@ const Students = () => {
                 />
                 <TextField
                   label="Father Name"
+                  size="small"
                   name="studentFatherName"
                   value={selectedStudent?.studentFatherName || ""}
                   onChange={(e) =>
@@ -773,6 +844,7 @@ const Students = () => {
                 />
                 <TextField
                   label="City"
+                  size="small"
                   name="city"
                   value={selectedStudent?.studentAddress?.city || ""}
                   onChange={(e) =>
@@ -787,6 +859,7 @@ const Students = () => {
                 />
                 <TextField
                   label="State"
+                  size="small"
                   name="state"
                   value={selectedStudent?.studentAddress?.state || ""}
                   onChange={(e) =>
@@ -800,6 +873,7 @@ const Students = () => {
                   }
                 />
                 <TextField
+                  size="small"
                   label="Country"
                   name="country"
                   value={selectedStudent?.studentAddress?.country || ""}
@@ -815,6 +889,7 @@ const Students = () => {
                 />
                 <TextField
                   label="Postal"
+                  size="small"
                   name="postalCode"
                   value={selectedStudent?.studentAddress?.postalCode || ""}
                   onChange={(e) =>
@@ -829,6 +904,7 @@ const Students = () => {
                 />
                 <TextField
                   label="Category"
+                  size="small"
                   name="studentCategory"
                   select
                   value={selectedStudent?.studentCategory || ""}
@@ -847,24 +923,31 @@ const Students = () => {
                 </TextField>
                 <TextField
                   label="Student type"
+                  size="small"
                   name="studentType"
                   select
+                  disabled={studentTypeOptions?.length == 0}
                   value={selectedStudent?.studentType || ""}
-                  onChange={(e) =>
+                  onChange={(e) => {
+                    console.log(e);
+                    console.log(e.target.name);
+                    console.log(e.target.value);
                     setSelectedStudent((prev) => ({
                       ...prev,
                       [e.target.name]: e.target.value,
-                    }))
-                  }
+                    }));
+                  }}
                 >
-                  {studentTypeOptions.map((item) => (
-                    <MenuItem key={item.value} value={item.value}>
-                      {item.label}
-                    </MenuItem>
-                  ))}
+                  {studentTypeOptions.length > 0 &&
+                    studentTypeOptions?.map((item) => (
+                      <MenuItem key={item.value} value={item.value}>
+                        {item.label}
+                      </MenuItem>
+                    ))}
                 </TextField>
                 <TextField
                   label="Admission"
+                  size="small"
                   name="studentAdmissionYear"
                   value={selectedStudent?.studentAdmissionYear || ""}
                   onChange={(e) =>

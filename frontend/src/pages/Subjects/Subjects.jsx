@@ -24,6 +24,7 @@ import {
   updateSubject,
   deleteSubject,
 } from "../../services/subject.js";
+import { subjectValidation } from "./subjectValidation.js";
 
 const Subjects = () => {
   const theme = useTheme();
@@ -31,6 +32,7 @@ const Subjects = () => {
 
   // Data and dialog state
   const [refreshTable, setRefreshTable] = useState(false);
+  const [validationError, setValidationError] = useState("");
 
   // Fetch subjects
   const [isDataFetched, setDataFetched] = useState(false);
@@ -68,8 +70,10 @@ const Subjects = () => {
     setRegisterDialogOpen(true);
   };
   const closeRegisterDialog = () => {
-    setRegisterDialogOpen(false);
+    setValidationError("");
+    setRegisterError({});
     setRefreshTable((prev) => !prev);
+    setRegisterDialogOpen(false);
   };
 
   // Update dialog state
@@ -84,8 +88,10 @@ const Subjects = () => {
     setUpdateDialogOpen(true);
   };
   const closeUpdateDialog = () => {
-    setUpdateDialogOpen(false);
+    setValidationError("");
+    setUpdateError({});
     setRefreshTable((prev) => !prev);
+    setUpdateDialogOpen(false);
   };
 
   // Delete dialog state
@@ -101,21 +107,25 @@ const Subjects = () => {
 
   // CRUD handlers
   const handleRegisterSubject = async (formData) => {
-    setRegisterError("");
+    setRegisterError({});
+    setValidationError("");
     setRegisterLoading(true);
-    // Add validation as needed
+    const registrationMsg = subjectValidation(formData);
+    if (Object.keys(registrationMsg).length > 0) {
+      setRegisterError(registrationMsg);
+      setRegisterLoading(false);
+      return;
+    }
     try {
       const response = await addSubject(formData);
-      if (!response || response.status !== 201) {
-        setRegisterError(
-          response?.message || "Registration failed. Please try again."
-        );
-        setRegisterLoading(false);
-        return;
+      console.log(response);
+      if (response.statusCode == 201) {
+        closeRegisterDialog();
       }
-      closeRegisterDialog();
+      setRegisterLoading(false);
+      return;
     } catch (error) {
-      setRegisterError(
+      setValidationError(
         error?.response?.data?.message ||
           error?.message ||
           "Registration failed. Please try again."
@@ -126,19 +136,26 @@ const Subjects = () => {
   };
 
   const handleUpdateSubject = async (subject) => {
-    setUpdateError("");
+    setUpdateError({});
     setUpdateLoading(true);
-    // Add validation as needed
+    console.log("handle update", subject);
+    const registrationMsg = subjectValidation(subject);
+    if (Object.keys(registrationMsg).length > 0) {
+      setUpdateError(registrationMsg);
+      setUpdateLoading(false);
+      return;
+    }
     try {
       const updated = await updateSubject(subject.id, subject);
-      if (!updated) {
-        setUpdateError("Failed to update subject");
-        setUpdateLoading(false);
-        return;
+      console.log("update after call back api: ", updated);
+
+      if (updated.statusCode == 200) {
+        closeUpdateDialog();
       }
-      closeUpdateDialog();
+      setUpdateLoading(false);
+      return;
     } catch (error) {
-      setUpdateError(
+      setValidationError(
         error?.response?.data?.message ||
           error?.message ||
           "Update failed. Please try again."
@@ -218,7 +235,9 @@ const Subjects = () => {
         maxWidth: 240,
         valueGetter: (params) =>
           Array.isArray(params?.row?.subjectTeachers)
-            ? params.row.subjectTeachers.map((t) => t.teacherFullName).join(", ")
+            ? params.row.subjectTeachers
+                .map((t) => t.teacherFullName)
+                .join(", ")
             : "",
       },
       {
@@ -268,21 +287,16 @@ const Subjects = () => {
               dialogHeading={"Register Subject"}
             >
               <DialogContent>
-                {registerError && (
-                  <Box mb={2}>
-                    <Typography color="error" variant="body2">
-                      {registerError}
-                    </Typography>
-                  </Box>
-                )}
                 <FormFieldsStack>
                   <TextField
-                    size="medium"
+                    size="small"
                     label="Subject Code"
                     required
+                    error={!!registerError?.codeError}
+                    helperText={registerError?.codeError}
                     variant="outlined"
                     name="subjectCode"
-                    value={registerForm.subjectCode || ""}
+                    value={registerForm?.subjectCode || ""}
                     onChange={(e) =>
                       setRegisterForm({
                         ...registerForm,
@@ -291,12 +305,14 @@ const Subjects = () => {
                     }
                   />
                   <TextField
-                    size="medium"
+                    size="small"
                     label="Subject Name"
+                    error={!!registerError?.nameError}
+                    helperText={registerError?.nameError}
                     required
                     variant="outlined"
                     name="subjectName"
-                    value={registerForm.subjectName || ""}
+                    value={registerForm?.subjectName || ""}
                     onChange={(e) =>
                       setRegisterForm({
                         ...registerForm,
@@ -305,13 +321,15 @@ const Subjects = () => {
                     }
                   />
                   <TextField
-                    size="medium"
+                    size="small"
                     label="Theory Marks"
                     required
                     variant="outlined"
+                    error={!!registerError?.theoryError}
+                    helperText={registerError?.theoryError}
                     name="subjectMaxMarksTheory"
                     type="number"
-                    value={registerForm.subjectMaxMarksTheory || ""}
+                    value={registerForm?.subjectMaxMarksTheory || ""}
                     onChange={(e) =>
                       setRegisterForm({
                         ...registerForm,
@@ -320,13 +338,15 @@ const Subjects = () => {
                     }
                   />
                   <TextField
-                    size="medium"
+                    size="small"
                     label="Practical Marks"
                     required
+                    error={!!registerError?.practicalError}
+                    helperText={registerError?.practicalError}
                     variant="outlined"
                     name="subjectMaxMarksPractical"
                     type="number"
-                    value={registerForm.subjectMaxMarksPractical || ""}
+                    value={registerForm?.subjectMaxMarksPractical || ""}
                     onChange={(e) =>
                       setRegisterForm({
                         ...registerForm,
@@ -335,13 +355,15 @@ const Subjects = () => {
                     }
                   />
                   <TextField
-                    size="medium"
+                    size="small"
                     label="Credit"
                     required
+                    error={!!registerError?.creditError}
+                    helperText={registerError?.creditError}
                     variant="outlined"
                     name="subjectCreditPoints"
                     type="number"
-                    value={registerForm.subjectCreditPoints || ""}
+                    value={registerForm?.subjectCreditPoints || ""}
                     onChange={(e) =>
                       setRegisterForm({
                         ...registerForm,
@@ -352,7 +374,19 @@ const Subjects = () => {
                   {/* Add subjectTeachers selection as needed */}
                 </FormFieldsStack>
               </DialogContent>
-              <Box display="flex" justifyContent="center">
+              <Box
+                display="flex"
+                justifyContent="center"
+                alignItems="center"
+                flexDirection="column"
+              >
+                {validationError && (
+                  <Box>
+                    <Typography color="error" variant="h6">
+                      {validationError}
+                    </Typography>
+                  </Box>
+                )}
                 <DialogActions
                   sx={{
                     "& :hover": {
@@ -388,17 +422,13 @@ const Subjects = () => {
             dialogHeading={"Update Subject"}
           >
             <DialogContent>
-              {updateError && (
-                <Box mb={2}>
-                  <Typography color="error" variant="h6">
-                    {updateError}
-                  </Typography>
-                </Box>
-              )}
               <FormFieldsStack>
                 <TextField
+                  size="small"
                   label="Subject Code"
                   name="subjectCode"
+                  error={!!updateError?.codeError}
+                  helperText={updateError?.codeError}
                   value={selectedSubject?.subjectCode || ""}
                   onChange={(e) =>
                     setSelectedSubject((prev) => ({
@@ -409,7 +439,10 @@ const Subjects = () => {
                 />
                 <TextField
                   label="Subject Name"
+                  size="small"
                   name="subjectName"
+                  error={!!updateError?.nameError}
+                  helperText={updateError?.nameError}
                   value={selectedSubject?.subjectName || ""}
                   onChange={(e) =>
                     setSelectedSubject((prev) => ({
@@ -420,9 +453,12 @@ const Subjects = () => {
                 />
                 <TextField
                   label="Theory Marks"
-                  name="maxMarksTheory"
+                  name="subjectMaxMarksTheory"
+                  size="small"
                   type="number"
-                  value={selectedSubject?.maxMarksTheory || ""}
+                  error={!!updateError?.theoryError}
+                  helperText={updateError?.theoryError}
+                  value={selectedSubject?.subjectMaxMarksTheory || ""}
                   onChange={(e) =>
                     setSelectedSubject((prev) => ({
                       ...prev,
@@ -432,9 +468,12 @@ const Subjects = () => {
                 />
                 <TextField
                   label="Practical Marks"
-                  name="maxMarksPractical"
+                  size="small"
+                  name="subjectMaxMarksPractical"
                   type="number"
-                  value={selectedSubject?.maxMarksPractical || ""}
+                  error={!!updateError?.practicalError}
+                  helperText={updateError?.practicalError}
+                  value={selectedSubject?.subjectMaxMarksPractical || ""}
                   onChange={(e) =>
                     setSelectedSubject((prev) => ({
                       ...prev,
@@ -444,9 +483,12 @@ const Subjects = () => {
                 />
                 <TextField
                   label="Credit"
-                  name="subCredit"
+                  name="subjectCreditPoints"
                   type="number"
-                  value={selectedSubject?.subCredit || ""}
+                  size="small"
+                  error={!!updateError?.creditError}
+                  helperText={updateError?.creditError}
+                  value={selectedSubject?.subjectCreditPoints || ""}
                   onChange={(e) =>
                     setSelectedSubject((prev) => ({
                       ...prev,
@@ -457,6 +499,13 @@ const Subjects = () => {
                 {/* Add subjectTeachers selection if needed */}
               </FormFieldsStack>
             </DialogContent>
+            {validationError && (
+              <Box>
+                <Typography color="error" variant="h6">
+                  {validationError}
+                </Typography>
+              </Box>
+            )}
             <DialogActions
               sx={{
                 display: "flex",
@@ -489,7 +538,7 @@ const Subjects = () => {
       <Box>
         {isDeleteDialogOpen && selectedSubject && (
           <FormDialogWrapper
-            sx={{ height: "20vh" }}
+            sx={{ height: "34vh" }}
             isDialogOpen={isDeleteDialogOpen}
             closeDialog={closeDeleteDialog}
             dialogHeading={"Remove Subject"}
