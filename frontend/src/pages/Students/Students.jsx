@@ -1,5 +1,11 @@
 /* eslint-disable no-unused-vars */
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 //date setup
 import dayjs from "dayjs";
@@ -39,6 +45,14 @@ import FormFieldsStack from "../../components/FormFieldsStack.jsx";
 import DeleteConfirmationDialogContent from "../../components/DeleteConfirmationDialogContent.jsx";
 import { courseList } from "../../services/course.js";
 const Students = () => {
+  //render
+  const renderCount = useRef(1);
+
+  useEffect(() => {
+    renderCount.current += 1;
+    console.log(`Rendered ${renderCount.current} times`);
+  });
+
   //theme setup
   const theme = useTheme();
   const colors = getColorTokens(theme.palette.mode);
@@ -87,6 +101,8 @@ const Students = () => {
     fetchStudents();
   }, [fetchStudents, refreshTable, fetchCourseList]);
 
+  const studentList = React.memo(students);
+  React.memo(courseChoices);
   // Register Dialog open/close handlers
   const openRegisterDialog = () => {
     setRegisterForm({}); // Reset the form fields
@@ -199,143 +215,130 @@ const Students = () => {
   };
 
   // Delete Handler
-  const handleDeleteStudent = async (student) => {
-    try {
-      const response = await deleteStudent(student);
-      if (!response) console.error("Failed to delete student");
-      closeDeleteDialog();
-    } catch (error) {
-      console.error("Error deleting student:", error);
-    }
-  };
+  const handleDeleteStudent = useCallback(() => {
+    async (student) => {
+      try {
+        const response = await deleteStudent(student);
+        if (!response) console.error("Failed to delete student");
+        closeDeleteDialog();
+      } catch (error) {
+        console.error("Error deleting student:", error);
+      }
+    };
+  }, []);
 
   // DataGrid columns
-  const columns = [
-    {
-      field: "index",
-      headerName: "S. No.",
-      headerAlign: "center",
-      align: "left",
-      width: 60,
-      maxWidth: 80,
-    },
-    {
-      field: "studentFullName",
-      headerName: "Full Name",
-      headerAlign: "center",
-      align: "left",
-      width: 100,
-      maxWidth: 120,
-    },
-    {
-      field: "studentDateOfBirth",
-      headerName: "DOB",
-      headerAlign: "center",
-      align: "left",
-      Width: 120,
-      maxWidth: 120,
-    },
-    {
-      field: "studentEnrollmentNumber",
-      headerName: "Enrollment No.",
-      headerAlign: "center",
-      align: "left",
-      width: 120,
-      maxWidth: 140,
-    },
-    {
-      field: "studentRollNumber",
-      headerName: "Roll No.",
-      headerAlign: "center",
-      align: "left",
-      maxWidth: 140,
-      Width: 120,
-    },
-    {
-      field: "studentCurrentCourseId",
-      headerName: "Course",
-      headerAlign: "center",
-      align: "left",
-      maxWidth: 140,
-      Width: 120,
-      valueGetter: (params) => {
-        if (!params) {
-          return "N/A";
-        }
-        return params?.courseCode;
+  const columns = useMemo(
+    () => [
+      {
+        field: "index",
+        headerName: "S.No.",
+        headerAlign: "center",
+        align: "left",
+        width: 80,
+        maxWidth: 80,
       },
-    },
-    {
-      field: "studentEmail",
-      headerName: "Email",
-      headerAlign: "center",
-      align: "left",
-      maxWidth: 120,
-      Width: 120,
-    },
-    {
-      field: "studentContactNumber",
-      headerName: "Contact No.",
-      headerAlign: "center",
-      align: "left",
-      maxWidth: 160,
-      Width: 120,
-    },
-    {
-      field: "studentFatherName",
-      headerName: "Father's Name",
-      headerAlign: "center",
-      align: "left",
-      maxWidth: 120,
-    },
-    {
-      field: "city",
-      headerName: "City",
-      headerAlign: "center",
-      align: "left",
-      maxWidth: 120,
-    },
+      {
+        field: "studentFullName",
+        headerName: "Full Name",
+        headerAlign: "center",
+        align: "left",
+      },
+      {
+        field: "studentDateOfBirth",
+        headerName: "DOB",
+        headerAlign: "center",
+        align: "left",
+      },
+      {
+        field: "studentEnrollmentNumber",
+        headerName: "Enrollment No.",
+        headerAlign: "center",
+        align: "left",
+      },
+      {
+        field: "studentRollNumber",
+        headerName: "Roll No.",
+        headerAlign: "center",
+        align: "left",
+      },
+      {
+        field: "studentCurrentCourseId",
+        headerName: "Course",
+        headerAlign: "center",
+        align: "left",
 
-    {
-      field: "studentCategory",
-      headerName: "Category",
-      headerAlign: "center",
-      align: "left",
-      maxWidth: 100,
-    },
-    {
-      field: "studentType",
-      headerName: "Type",
-      headerAlign: "center",
-      align: "left",
-      maxWidth: 100,
-    },
-    {
-      field: "action",
-      headerName: "Actions",
-      headerAlign: "center",
-      align: "center",
-      minWidth: 120,
-      maxWidth: 140,
-      renderCell: (params) => {
-        const selectedRow = params.row;
-        return (
-          <GridActionButton
-            openUpdateDialog={() => openUpdateDialog(selectedRow)}
-            openDeleteDialog={() => openDeleteDialog(selectedRow)}
-            selectedRow={selectedRow}
-          />
-        );
+        valueGetter: (params) => {
+          if (!params) {
+            return "N/A";
+          }
+          return params?.courseCode;
+        },
       },
-    },
-  ];
+      {
+        field: "studentEmail",
+        headerName: "Email",
+        headerAlign: "center",
+        align: "left",
+      },
+      {
+        field: "studentContactNumber",
+        headerName: "Contact No.",
+        headerAlign: "center",
+        align: "left",
+      },
+      {
+        field: "studentFatherName",
+        headerName: "Father's Name",
+        headerAlign: "center",
+        align: "left",
+      },
+      {
+        field: "city",
+        headerName: "City",
+        headerAlign: "center",
+        align: "left",
+      },
+
+      {
+        field: "studentCategory",
+        headerName: "Category",
+        headerAlign: "center",
+        align: "left",
+      },
+      {
+        field: "studentType",
+        headerName: "Type",
+        headerAlign: "center",
+        align: "left",
+      },
+      {
+        field: "action",
+        headerName: "Actions",
+        headerAlign: "center",
+        align: "center",
+
+        renderCell: (params) => {
+          const selectedRow = params.row;
+          return (
+            <GridActionButton
+              openUpdateDialog={() => openUpdateDialog(selectedRow)}
+              openDeleteDialog={() => openDeleteDialog(selectedRow)}
+              selectedRow={studentList}
+            />
+          );
+        },
+      },
+    ],
+    [studentList]
+  );
 
   return (
-    <Box width="100%">
+    <Box width="100%" maxheight="80vh">
       <PageSectionWrapper>
         {/* Header and Add Student Button */}
         <GridHeaderWithAction
-          pageTitle={"Student Enrollment Records"}
+          pageTitle={"Student Records"}
           onButtonClick={openRegisterDialog}
           buttonLabel={"Add Student"}
         />
@@ -992,7 +995,7 @@ const Students = () => {
         {isDeleteDialogOpen && selectedStudent && (
           <FormDialogWrapper
             sx={{
-              height: "36vh",
+              height: "46vh",
             }}
             isDialogOpen={isDeleteDialogOpen}
             closeDialog={closeDeleteDialog}

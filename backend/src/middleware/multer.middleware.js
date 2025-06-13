@@ -18,8 +18,9 @@ export const storage = multer.diskStorage({
     const uniqueSuffix = Date.now();
     cb(null, `${uniqueSuffix}_${file.originalname}`);
   },
-});
+  
+},);
 
 export const upload = multer({ storage: storage });
-console.log("upload", upload);
+// console.log("upload", upload);
 

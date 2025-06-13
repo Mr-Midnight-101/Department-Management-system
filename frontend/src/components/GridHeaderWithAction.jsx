@@ -15,8 +15,9 @@ const GridHeaderWithAction = ({
       justifyContent="space-between"
       sx={{
         gap: 1,
-        my: 2,
+        my: 4,
         mr: 0,
+        mt: 6,
         alignItems: { xs: "flex-start", sm: "center" },
         flexDirection: { xs: "column", sm: "row" },
         ...sx,
@@ -40,7 +41,10 @@ const GridHeaderWithAction = ({
             onClick={onButtonClick}
             sx={{
               color: colors.text[100],
-              "& :hover": { background: "transparent" },
+              background: colors.gradient[100],
+              "& :hover": {
+                background: "transparent",
+              },
               gap: 1,
               display: "flex",
               alignItems: "center",

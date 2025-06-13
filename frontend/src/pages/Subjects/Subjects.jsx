@@ -180,59 +180,48 @@ const Subjects = () => {
     () => [
       {
         field: "index",
-        headerName: "S. No.",
+        headerName: "S.No.",
         headerAlign: "center",
         align: "left",
-        width: 60,
-        maxWidth: 100,
+        width: 80,
+        maxWidth: 80,
       },
       {
         field: "subjectCode",
         headerName: "Subject Code",
         headerAlign: "center",
         align: "left",
-        width: 120,
-        maxWidth: 140,
       },
       {
         field: "subjectName",
         headerName: "Subject Name",
         headerAlign: "center",
         align: "left",
-        width: 180,
-        maxWidth: 220,
       },
       {
         field: "subjectMaxMarksTheory",
         headerName: "Theory Marks",
         headerAlign: "center",
         align: "left",
-        width: 120,
-        maxWidth: 140,
       },
       {
         field: "subjectMaxMarksPractical",
         headerName: "Practical Marks",
         headerAlign: "center",
         align: "left",
-        width: 120,
-        maxWidth: 140,
       },
       {
         field: "subjectCreditPoints",
         headerName: "Credit",
         headerAlign: "center",
         align: "left",
-        width: 80,
-        maxWidth: 100,
       },
       {
         field: "subjectTeachers",
         headerName: "Teachers",
         headerAlign: "center",
         align: "left",
-        width: 200,
-        maxWidth: 240,
+
         valueGetter: (params) =>
           Array.isArray(params?.row?.subjectTeachers)
             ? params.row.subjectTeachers
@@ -245,8 +234,7 @@ const Subjects = () => {
         headerName: "Actions",
         headerAlign: "center",
         align: "center",
-        minWidth: 140,
-        maxWidth: 180,
+
         renderCell: (params) => {
           const selectedRow = params.row;
           return (
@@ -538,7 +526,7 @@ const Subjects = () => {
       <Box>
         {isDeleteDialogOpen && selectedSubject && (
           <FormDialogWrapper
-            sx={{ height: "34vh" }}
+            sx={{  height: "46vh", }}
             isDialogOpen={isDeleteDialogOpen}
             closeDialog={closeDeleteDialog}
             dialogHeading={"Remove Subject"}

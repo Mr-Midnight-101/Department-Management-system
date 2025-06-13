@@ -19,7 +19,7 @@ const FormDialogWrapper = ({
         paper: {
           sx: {
             width: { xs: "80vw", sm: "50vw", md: "40vw" },
-            height: { xs: "80vh", sm: "70vh", md: "60vh" },
+            maxheight: { xs: "80vh", sm: "70vh", md: "60vh" },
             p: 2,
             ...sx,
           },

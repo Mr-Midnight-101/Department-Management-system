@@ -63,10 +63,7 @@ export const loginTeacher = async (teacher) => {
 };
 // Logout teacher
 export const logoutTeacher = async () => {
-  const logout = await axios.post("/api/teacher/logout").then((res) => {
-    console.log("logout", res.data);
-    res.data;
-  });
+  const logout = await axios.post("/api/teacher/logout");
   return logout;
 };
 

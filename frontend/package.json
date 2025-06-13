@@ -21,6 +21,8 @@
     "@nivo/geo": "^0.94.0",
     "@nivo/line": "^0.94.0",
     "@nivo/pie": "^0.94.0",
+    "@splinetool/react-spline": "^4.0.0",
+    "@splinetool/runtime": "^1.10.2",
     "@tailwindcss/vite": "^4.1.6",
     "axios": "^1.9.0",
     "cors": "^2.8.5",

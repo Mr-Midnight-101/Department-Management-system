@@ -277,6 +277,44 @@ export const createCustomTheme = (mode) => {
             backgroundColor: colors.clay[100],
             color: colors.text[100],
           },
+          root: {
+            "& .MuiDataGrid-root": {
+              border: "none !important",
+              background: `${colors.primary[700]} !important`,
+              color: `${colors.text[100]} !important`,
+            },
+            "& .MuiDataGrid-cell": {
+              borderBottom: "none",
+              fontSize: "0.9rem",
+              paddingLeft: "24px",
+            },
+            "& .MuiDataGrid-columnHeader": {
+              background: `${colors.primary[900]} !important`,
+              borderBottom: "none",
+            },
+            "& .MuiDataGrid-row:hover": {
+              backgroundColor: `${colors.clay[100]} !important`,
+            },
+            "& .MuiDataGrid-row.Mui-selected": {
+              backgroundColor: `${colors.pink[100]} !important`,
+              "&:hover": {
+                backgroundColor: `${colors.ArtyClick[100]} !important`,
+              },
+            },
+            "& .MuiDataGrid-footerContainer": {
+              borderTop: "none",
+              backgroundColor: `${colors.primary[900]} !important`,
+            },
+            "& .MuiDataGrid-virtualScroller": {
+              backgroundColor: `${colors.grey[100]} !important`,
+            },
+            "& .MuiDataGrid-cell:hover": {
+              cursor: "pointer",
+            },
+            "& .MuiDataGrid-filler , .MuiDataGrid-scrollbarFiller--header": {
+              backgroundColor: colors.primary[900],
+            },
+          },
         },
       },
 

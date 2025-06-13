@@ -5,6 +5,7 @@ import {
   getAttendanceById,
   editAttendance,
   attendanceCount,
+  filterAttendance,
 } from "../controllers/attendance.controller.js";
 
 const attendanceRoutes = Router();
@@ -22,3 +23,5 @@ attendanceRoutes
   .patch(editAttendance); //edit a specific attendance record by ID
 
 export { attendanceRoutes }; // Export the router
+
+attendanceRoutes.route("/filter").get(filterAttendance);

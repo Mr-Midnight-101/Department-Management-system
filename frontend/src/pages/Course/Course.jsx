@@ -9,6 +9,8 @@ import {
   MenuItem,
   TextField,
   useTheme,
+  Alert,
+  Snackbar,
 } from "@mui/material";
 import { getColorTokens } from "../../theme/theme";
 import {
@@ -27,19 +29,20 @@ import DeleteConfirmationDialogContent from "../../components/DeleteConfirmation
 import GridActionButton from "../../components/GridActionButton.jsx";
 import { durationoptions, semesterOptions } from "./menuList.js";
 import courseValidator from "./courseValidator.js";
+import { useNavigate } from "react-router-dom";
 // Example dropdown options (customize as needed)
 
 const Course = () => {
   const theme = useTheme();
   const colors = getColorTokens(theme.palette.mode);
-
+  const navigate = useNavigate();
   // Data and dialog state
   const [courses, setCourses] = useState([]);
   const [refreshTable, setRefreshTable] = useState(false);
 
   // Fetch courses
   const [isDataFetched, setDataFetched] = useState(false);
-  const [isFetchError, setFetchError] = useState(false);
+  const [isFetchError, setFetchError] = useState("");
   const fetchAllCourses = useCallback(async () => {
     try {
       const data = await fetchCourses();
@@ -51,10 +54,13 @@ const Course = () => {
       setCourses(mappedRows);
       setDataFetched(true);
     } catch (error) {
-      console.error("Error fetching courses:", error);
-      setFetchError(true);
+      //console.error("Error fetching courses:", error);
+      setFetchError(error.response.data.message);
+      setTimeout(() => {
+        navigate("/login");
+      }, 1000 * 5);
     }
-  }, []);
+  }, [navigate]);
 
   useEffect(() => {
     fetchAllCourses();
@@ -92,9 +98,10 @@ const Course = () => {
     setUpdateLoading(false);
   };
   const closeUpdateDialog = () => {
+    setValidationError("");
     setUpdateDialogOpen(false);
     setRefreshTable((prev) => !prev);
-    setUpdateError(undefined);
+    setUpdateError({});
   };
 
   // Delete dialog state
@@ -184,51 +191,41 @@ const Course = () => {
     () => [
       {
         field: "index",
-        headerName: "S. No.",
+        headerName: "S.No.",
         headerAlign: "center",
         align: "left",
-        width: 60,
-        maxWidth: 100,
+        width: 80,
+        maxWidth: 80,
       },
       {
         field: "courseCode",
         headerName: "Course Code",
         headerAlign: "center",
         align: "left",
-        width: 120,
-        maxWidth: 140,
       },
       {
         field: "courseTitle",
         headerName: "Course Title",
         headerAlign: "center",
         align: "left",
-        width: 180,
-        maxWidth: 220,
       },
       {
         field: "courseDuration",
         headerName: "Course Duration",
         headerAlign: "center",
         align: "left",
-        width: 140,
-        maxWidth: 160,
       },
       {
         field: "courseTerms",
         headerName: "Terms",
         headerAlign: "center",
         align: "left",
-        width: 100,
-        maxWidth: 120,
       },
       {
         field: "courseCreditUnits",
         headerName: "Credit Units",
         headerAlign: "center",
         align: "left",
-        width: 100,
-        maxWidth: 120,
       },
       {
         field: "action",
@@ -266,7 +263,6 @@ const Course = () => {
           columns={columns}
         />
       </PageSectionWrapper>
-
       {/* Register Dialog */}
       <Box>
         {isRegisterDialogOpen && (
@@ -421,7 +417,6 @@ const Course = () => {
           </Box>
         )}
       </Box>
-
       {/* Update Dialog */}
       <Box>
         {isUpdateDialogOpen && selectedCourse && (
@@ -562,12 +557,11 @@ const Course = () => {
           </FormDialogWrapper>
         )}
       </Box>
-
       {/* Delete Dialog */}
       <Box>
         {isDeleteDialogOpen && selectedCourse && (
           <FormDialogWrapper
-            sx={{ height: "32vh" }}
+            sx={{ height: "46vh" }}
             isDialogOpen={isDeleteDialogOpen}
             closeDialog={closeDeleteDialog}
             dialogHeading={"Remove Course"}
@@ -580,6 +574,16 @@ const Course = () => {
           </FormDialogWrapper>
         )}
       </Box>
+
+      {/* withoutlogin */}
+      {isFetchError && (
+        <Snackbar open={!!isFetchError} autoHideDuration={6000}>
+          <Alert variant="filled" severity="error">
+            {isFetchError}
+            {"\n Redirecting to login...."}
+          </Alert>
+        </Snackbar>
+      )}
     </Box>
   );
 };

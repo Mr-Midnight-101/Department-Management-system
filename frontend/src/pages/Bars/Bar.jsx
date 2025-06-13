@@ -1,24 +1,25 @@
 /* eslint-disable no-unused-vars */
-/* eslint-disable react-refresh/only-export-components */
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import { ProSidebar, Menu, MenuItem } from "react-pro-sidebar";
 import { Box, Typography, useTheme } from "@mui/material";
 import { Link } from "react-router-dom";
-import SchoolOutlinedIcon from "@mui/icons-material/SchoolOutlined"; //students
-import LibraryBooksOutlinedIcon from "@mui/icons-material/LibraryBooksOutlined"; //course
-import CategoryOutlinedIcon from "@mui/icons-material/CategoryOutlined"; //subjects
-import SupervisorAccountOutlinedIcon from "@mui/icons-material/SupervisorAccountOutlined"; //teacher
-import HowToRegOutlinedIcon from "@mui/icons-material/HowToRegOutlined"; //attendance
+import SchoolOutlinedIcon from "@mui/icons-material/SchoolOutlined";
+import LibraryBooksOutlinedIcon from "@mui/icons-material/LibraryBooksOutlined";
+import CategoryOutlinedIcon from "@mui/icons-material/CategoryOutlined";
+import SupervisorAccountOutlinedIcon from "@mui/icons-material/SupervisorAccountOutlined";
+import HowToRegOutlinedIcon from "@mui/icons-material/HowToRegOutlined";
 import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
 import MenuOpenOutlinedIcon from "@mui/icons-material/MenuOpenOutlined";
-import WidgetsOutlinedIcon from "@mui/icons-material/WidgetsOutlined"; //dashboard
-import BarChartOutlinedIcon from "@mui/icons-material/BarChartOutlined"; //barchart
-import PieChartOutlineOutlinedIcon from "@mui/icons-material/PieChartOutlineOutlined"; //pie
-import StackedLineChartOutlinedIcon from "@mui/icons-material/StackedLineChartOutlined"; //line
+import WidgetsOutlinedIcon from "@mui/icons-material/WidgetsOutlined";
+import BarChartOutlinedIcon from "@mui/icons-material/BarChartOutlined";
+import PieChartOutlineOutlinedIcon from "@mui/icons-material/PieChartOutlineOutlined";
+import StackedLineChartOutlinedIcon from "@mui/icons-material/StackedLineChartOutlined";
 import { getColorTokens } from "../../theme/theme.js";
 import "react-pro-sidebar/dist/css/styles.css";
+import { UserContext } from "../UserContext/UserContext.jsx";
 
 const SidebarItem = ({ title, to, icon, selected, setSelected, color }) => {
+  const { updateUser } = useContext(UserContext);
   return (
     <MenuItem
       style={{ color }}
@@ -37,14 +38,18 @@ const Bar = () => {
   const colors = getColorTokens(theme.palette.mode);
   const [selected, setSelected] = useState("Dashboard");
   const [collapsed, setCollapsed] = useState(false);
+  
 
   return (
     <Box
-      height="100%"
       sx={{
-        margin: "0",
+        // height: "100vh",
+        display: "flex",
+        flexDirection: "row",
+        position: "relative",
         "& .pro-sidebar-rootStyles": {
-          width: "100% !important",
+          width: collapsed ? "65px" : "250px",
+          transition: "width 0.3s ease",
         },
         "& .pro-sidebar-inner": {
           borderRadius: "0 4px 4px 0",
@@ -59,19 +64,12 @@ const Bar = () => {
           "&:hover": { color: `${colors.text[100]} !important` },
         },
         "& .pro-menu-item.active": {
-          backgroundColor: "rgba(255, 255, 255, 0.2)" /* 20% opaque white */,
-          /* backdrop-filter will blur and desaturate the *actual gradient behind this element* */
-          backdropFlter: "blur(8px)" /* Adjust blur strength as desired */,
-          // -webkit-backdrop-filter: blur(8px); /* Safari support */
-
-          /* Optional: Subtle border for "glass" effect */
-          border: " 1px solid rgba(255, 255, 255, 0.3)",
-          borderRadius: "4px" /* Soften corners */,
-          boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)" /* Subtle shadow */,
-
-          /* Ensure content inside is readable */
+          backgroundColor: "rgba(255, 255, 255, 0.2)",
+          backdropFilter: "blur(8px)",
+          border: "1px solid rgba(255, 255, 255, 0.3)",
+          borderRadius: "4px",
+          boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
           color: colors.text[100],
-          // color: `${colors.yellow[100]} !important`,
           margin: "1px",
         },
         "& .pro-menu-item.active, & .pro-menu-item.active-item": {
@@ -89,7 +87,6 @@ const Bar = () => {
               margin: "0 10px 10px 0",
             }}
           />
-
           <Box>
             <SidebarItem
               title="Dashboard"
@@ -104,6 +101,7 @@ const Bar = () => {
                 padding: "12px 22px",
                 fontWeight: "bold",
                 color: colors.text[100],
+                m:"8px 0"
               }}
             >
               Data
@@ -146,12 +144,13 @@ const Bar = () => {
             <Typography
               variant="h5"
               sx={{
-                padding: "12px 22px",
+                m:"8px 0",
+                padding: "12px 12px",
                 fontWeight: "bold",
                 color: colors.text[100],
               }}
             >
-              {"Insight"}
+              Insight
             </Typography>
             <SidebarItem
               title="Bar"
@@ -160,7 +159,6 @@ const Bar = () => {
               selected={selected}
               setSelected={setSelected}
             />
-
             <SidebarItem
               title="Pie"
               to="/piechart"
@@ -168,7 +166,6 @@ const Bar = () => {
               selected={selected}
               setSelected={setSelected}
             />
-
             <SidebarItem
               title="Line"
               to="/linechart"

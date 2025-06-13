@@ -34,6 +34,7 @@ import {
   subjectRoutes,
   teacherRoutes,
 } from "./routes/app.routes.js";
+import { verifyJWT } from "./middleware/auth.middleware.js";
 
 // ⭐Block all routes that don't start with /website/api
 app.use((req, res, next) => {

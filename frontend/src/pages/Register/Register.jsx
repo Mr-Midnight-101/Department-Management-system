@@ -9,13 +9,17 @@ import {
   useTheme,
   Backdrop,
   DialogContent,
+  IconButton,
+  Tooltip,
 } from "@mui/material";
 import { getColorTokens } from "../../theme/theme";
 import LogoSync from "../../components/LogoSync";
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { validInput } from "./validInput";
 import { registerTeacher } from "../../services/teacher";
 import { useNavigate } from "react-router-dom";
+import FirstPageIcon from "@mui/icons-material/FirstPage";
+import { UserContext } from "../UserContext/UserContext";
 
 const Register = () => {
   const colors = getColorTokens(useTheme().palette.mode);
@@ -69,6 +73,12 @@ const Register = () => {
     }
   };
 
+  const handleLogin = () => {
+    setTimeout(() => {
+      navigate("/login");
+    }, 1000);
+  };
+
   return (
     <Box
       overflow="hidden"
@@ -82,6 +92,30 @@ const Register = () => {
       flexDirection="column"
       gap={2}
     >
+      <Box top="24px" left="24px" position="absolute">
+        <Tooltip enterDelay={1000} title="Back to login">
+          <IconButton
+            onClick={handleLogin}
+            sx={{
+              // backgroundColor: "greenyellow",
+              border: "1px solid rgba(255,255,255,0.2)",
+              width: "32px",
+              height: "32px",
+            }}
+          >
+            <Typography color={colors.text[100]}>
+              {" "}
+              <FirstPageIcon
+                sx={{
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
+              />{" "}
+            </Typography>
+          </IconButton>
+        </Tooltip>
+      </Box>
       {/* Logo */}
       <Box>
         <LogoSync />
@@ -150,6 +184,7 @@ const Register = () => {
           encType="multipart/form-data"
         >
           <TextField
+            disabled={resgiterLoading}
             error={!!registerError.nameError}
             // helperText={registerError.nameError}
             fullWidth
@@ -166,6 +201,7 @@ const Register = () => {
             }}
           />
           <TextField
+            disabled={resgiterLoading}
             error={!!registerError.emailError}
             // helperText={registerError.emailError}
             fullWidth
@@ -182,6 +218,7 @@ const Register = () => {
             }}
           />
           <TextField
+            disabled={resgiterLoading}
             fullWidth
             error={!!registerError.usernameError}
             // helperText={registerError.usernameError}
@@ -198,6 +235,7 @@ const Register = () => {
             }}
           />
           <TextField
+            disabled={resgiterLoading}
             error={!!registerError.passError}
             // helperText={registerError.passError}
             fullWidth
@@ -214,6 +252,7 @@ const Register = () => {
             }}
           />
           <TextField
+            disabled={resgiterLoading}
             fullWidth
             error={!!registerError.idError}
             // helperText={registerError.idError}
@@ -231,6 +270,7 @@ const Register = () => {
           />
           <TextField
             fullWidth
+            disabled={resgiterLoading}
             error={!!registerError.contactError}
             // helperText={registerError.contactError}
             size="small"
@@ -268,6 +308,7 @@ const Register = () => {
               Profile photo
             </Typography>
             <TextField
+              disabled={resgiterLoading}
               slotProps={{
                 input: { disableUnderline: true },
               }}
