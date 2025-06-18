@@ -6,6 +6,7 @@ import Apiresponse from "../utils/Apiresponse.js";
 import jwt from "jsonwebtoken";
 import { capitalize } from "../utils/capitalize.js";
 import { log } from "console";
+import { mailVerify } from "../utils/verifyOtp.js";
 
 const generateAccessAndRefreshTokens = async (teacherId) => {
   const teacher = await Teacher.findById(teacherId);
@@ -31,6 +32,7 @@ const registerTeacher = asyncHandler(async (req, res) => {
     teacherAssignedSubjects,
     teacherContactInfo,
     teacherAvatar,
+    gender,
   } = req.body;
 
   if (
@@ -41,6 +43,7 @@ const registerTeacher = asyncHandler(async (req, res) => {
       teacherPassword,
       teacherId,
       teacherContactInfo,
+      gender,
     ].some(
       (field) =>
         field === undefined ||
@@ -79,9 +82,19 @@ const registerTeacher = asyncHandler(async (req, res) => {
   }
 
   teacherFullName = capitalize(teacherFullName);
+  const emailOtp = Math.floor(100000 + Math.random() * 900000).toString();
+  const passOtp = Math.floor(100000 + Math.random() * 900000).toString();
+
+  // Set expiry 15 minutes from now and 5 minutes from now
+  const emailExpiresAt = Date.now() + 15 * 60 * 1000; // 15 mins
+  const passExpiresAt = Date.now() + 5 * 60 * 1000; // 5 mins
+
+  console.log("otp ex.", emailExpiresAt);
+  console.log("otp ex.", passExpiresAt);
 
   const teacher = await Teacher.create({
     teacherFullName: teacherFullName.trim().toLowerCase(),
+    gender: gender,
     teacherEmail: teacherEmail.trim().toLowerCase(),
     teacherUsername: teacherUsername.trim().toLowerCase(),
     teacherPassword,
@@ -89,6 +102,10 @@ const registerTeacher = asyncHandler(async (req, res) => {
     teacherAvatar: avatarImage?.url || "",
     teacherContactInfo: teacherContactInfo.trim(),
     teacherAssignedSubjects: teacherAssignedSubjects || [],
+    emailVerificationOtp: parseInt(emailOtp),
+    emailExpiresAt: emailExpiresAt.toString(),
+    passVerificationOtp: parseInt(passOtp),
+    passExpiresAt: passExpiresAt.toString(),
   });
 
   const createdTeacher = await Teacher.findById(teacher._id)
@@ -106,6 +123,24 @@ const registerTeacher = asyncHandler(async (req, res) => {
     );
   }
 
+  console.log(teacherEmail, teacherFullName, emailOtp, emailExpiresAt);
+
+  try {
+    const verificationEmail = await mailVerify({
+      userEmail: teacherEmail,
+      userName: teacherFullName,
+      otpCode: emailOtp,
+      otpExpiry: emailExpiresAt,
+    });
+    console.log(verificationEmail);
+
+    if (verificationEmail === true || verificationEmail) {
+      console.log("EMail output", verificationEmail);
+    }
+  } catch (error) {
+    console.log("error", error);
+  }
+
   return res
     .status(201)
     .json(
@@ -115,6 +150,7 @@ const registerTeacher = asyncHandler(async (req, res) => {
 
 const loginTeacher = asyncHandler(async (req, res) => {
   const { teacherUsername, teacherEmail, teacherPassword } = req.body;
+  console.log(teacherUsername, teacherEmail, teacherPassword);
 
   if ((!teacherUsername || !teacherEmail) && !teacherPassword) {
     throw new ApiError(
@@ -132,6 +168,7 @@ const loginTeacher = asyncHandler(async (req, res) => {
   }
 
   const isPasswordCorrect = await teacher.isPasswordCorrect(teacherPassword);
+  console.log("", isPasswordCorrect);
 
   if (!isPasswordCorrect) {
     throw new ApiError(401, "Invalid credentials.");
@@ -145,15 +182,21 @@ const loginTeacher = asyncHandler(async (req, res) => {
     "-teacherPassword -teacherRefreshToken"
   );
 
-  const options = {
+  const accessOption = {
     httpOnly: true,
     secure: true,
+    maxAge: (1000 * 60 * 60 * 24 * 1) / 2,
+  };
+  const refreshOption = {
+    httpOnly: true,
+    secure: true,
+    maxAge: 1000 * 60 * 60 * 24 * 2,
   };
 
   return res
     .status(200)
-    .cookie("accessToken", accessToken, options)
-    .cookie("refreshToken", refreshToken, options)
+    .cookie("accessToken", accessToken, accessOption)
+    .cookie("refreshToken", refreshToken, refreshOption)
     .json(
       new Apiresponse(200, loggedInTeacher, "Teacher logged in successfully.")
     );
@@ -291,6 +334,7 @@ const updateTeacherDetails = asyncHandler(async (req, res) => {
     teacherUsername,
     teacherId,
     teacherContactInfo,
+    gender,
   } = req.body;
 
   if (
@@ -299,7 +343,8 @@ const updateTeacherDetails = asyncHandler(async (req, res) => {
       teacherEmail ||
       teacherUsername ||
       teacherId ||
-      teacherContactInfo
+      teacherContactInfo ||
+      gender
     )
   ) {
     throw new ApiError(400, "Please provide at least one field to update.");
@@ -323,6 +368,9 @@ const updateTeacherDetails = asyncHandler(async (req, res) => {
         ...(teacherId && { teacherId: teacherId.trim() }),
         ...(teacherContactInfo && {
           teacherContactInfo: teacherContactInfo.trim(),
+        }),
+        ...(gender && {
+          gender: gender,
         }),
       },
     },

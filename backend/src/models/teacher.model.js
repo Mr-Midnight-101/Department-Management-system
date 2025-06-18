@@ -11,7 +11,11 @@ const teacherSchema = new mongoose.Schema(
       lowercase: true,
       match: [/^[a-zA-Z ]+$/, "Full name must contain only letters"],
     },
-
+    gender: {
+      type: String,
+      enum: ["Male", "Female"],
+      required: true,
+    },
     teacherEmail: {
       type: String,
       unique: true,
@@ -72,6 +76,17 @@ const teacherSchema = new mongoose.Schema(
     teacherRefreshToken: {
       type: String,
     },
+    isAuthenticated: { type: Boolean, default: false },
+    emailVerificationOtp: {
+      type: String,
+      default: "",
+    },
+    emailExpiresAt: {
+      type: Number,
+      default: 0,
+    },
+    passVerificationOtp: { type: String, default: "" },
+    passExpiresAt: { type: Number, default: 0 },
   },
   {
     timestamps: true,
@@ -123,6 +138,39 @@ teacherSchema.methods.generateRefreshToken = function () {
       expiresIn: process.env.REFRESH_TOKEN_EXPIRY,
     }
   );
+};
+
+teacherSchema.pre("save", async function (next) {
+  if (!this.isModified("emailVerificationOtp")) return next();
+  try {
+    this.emailVerificationOtp = await bcrypt.hash(
+      this.emailVerificationOtp,
+      10
+    );
+    next();
+  } catch (error) {
+    next(error);
+  }
+});
+teacherSchema.pre("save", async function (next) {
+  if (!this.isModified("passVerificationOtp")) return next();
+  try {
+    this.passVerificationOtp = await bcrypt.hash(this.passVerificationOtp, 10);
+    next();
+  } catch (error) {
+    next(error);
+  }
+});
+teacherSchema.methods.compareOtp = async function (emailVerifyOtp) {
+  try {
+    const compare = await bcrypt.compare(
+      emailVerifyOtp,
+      this.emailVerificationOtp
+    );
+    return compare;
+  } catch (error) {
+    return false;
+  }
 };
 
 export const Teacher = mongoose.model("Teacher", teacherSchema);
