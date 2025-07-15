@@ -4,6 +4,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { Course } from "../models/course.model.js";
 import ApiError from "../utils/ApiError.js";
 import Apiresponse from "../utils/Apiresponse.js";
+import { Activity } from "../models/recentActivity.model.js";
 
 const populateCourse = (query) => {
   // If you have any referenced fields in Course, add them here.
@@ -71,7 +72,9 @@ const addCourse = asyncHandler(async (req, res) => {
   }
 
   const populatedCourse = await populateCourse(Course.findById(course._id));
-
+  await Activity.create({
+    message: `New course "${course?.courseTitle}" added`,
+  });
   return res
     .status(201)
     .json(
@@ -169,7 +172,9 @@ const updateCourse = asyncHandler(async (req, res) => {
   if (!updatedCourse) {
     throw new ApiError(404, "Course not found for update.");
   }
-
+  await Activity.create({
+    message: `Course "${updateCourse?.courseTitle}" details updated`,
+  });
   return res
     .status(200)
     .json(new Apiresponse(200, updatedCourse, "Course updated successfully."));

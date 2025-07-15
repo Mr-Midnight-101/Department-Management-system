@@ -13,7 +13,7 @@ import { verifyJWT } from "../middleware/auth.middleware.js";
 const courseRoutes = Router();
 courseRoutes.get("/list", courseList);
 courseRoutes.route("/count").get(courseCount);
-courseRoutes.route("/").post(addCourse).get(verifyJWT, getAllCourses);
+courseRoutes.route("/").post(addCourse).get(getAllCourses);
 courseRoutes
   .route("/:id")
   .get(getCourseById)
@@ -21,3 +21,5 @@ courseRoutes
   .delete(deleteCourse);
 
 export { courseRoutes };
+
+

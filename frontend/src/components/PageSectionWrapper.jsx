@@ -6,6 +6,7 @@ const PageSectionWrapper = ({ children, sx = {} }) => (
     sx={{
       flex: 1,
       m: 0,
+      mt: 2,
       p: 0,
       ...sx,
     }}

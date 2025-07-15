@@ -5,8 +5,8 @@ import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import Apiresponse from "../utils/Apiresponse.js";
 import jwt from "jsonwebtoken";
 import { capitalize } from "../utils/capitalize.js";
-import { log } from "console";
-import { mailVerify } from "../utils/verifyOtp.js";
+import { sendEmailVerificationCode } from "../utils/emailOtpToTeacher.js";
+import { Activity } from "../models/recentActivity.model.js";
 
 const generateAccessAndRefreshTokens = async (teacherId) => {
   const teacher = await Teacher.findById(teacherId);
@@ -20,9 +20,6 @@ const generateAccessAndRefreshTokens = async (teacherId) => {
 };
 
 const registerTeacher = asyncHandler(async (req, res) => {
-  console.log("req.body", req.body);
-  console.log("req.file", req.file?.path);
-
   let {
     teacherFullName,
     teacherEmail,
@@ -32,7 +29,7 @@ const registerTeacher = asyncHandler(async (req, res) => {
     teacherAssignedSubjects,
     teacherContactInfo,
     teacherAvatar,
-    gender,
+    teacherGender,
   } = req.body;
 
   if (
@@ -43,7 +40,6 @@ const registerTeacher = asyncHandler(async (req, res) => {
       teacherPassword,
       teacherId,
       teacherContactInfo,
-      gender,
     ].some(
       (field) =>
         field === undefined ||
@@ -82,19 +78,18 @@ const registerTeacher = asyncHandler(async (req, res) => {
   }
 
   teacherFullName = capitalize(teacherFullName);
-  const emailOtp = Math.floor(100000 + Math.random() * 900000).toString();
-  const passOtp = Math.floor(100000 + Math.random() * 900000).toString();
+  const code = Math.floor(100000 + Math.random() * 900000).toString();
+  const emailCode = code;
+  const passwordCode = Math.floor(100000 + Math.random() * 900000).toString();
 
   // Set expiry 15 minutes from now and 5 minutes from now
-  const emailExpiresAt = Date.now() + 15 * 60 * 1000; // 15 mins
-  const passExpiresAt = Date.now() + 5 * 60 * 1000; // 5 mins
+  const emailCodeExpiresAt = Date.now() + 15 * 60 * 1000;
 
-  console.log("otp ex.", emailExpiresAt);
-  console.log("otp ex.", passExpiresAt);
+  const passwordCodeExpiresAt = Date.now() + 15 * 60 * 1000;
 
   const teacher = await Teacher.create({
     teacherFullName: teacherFullName.trim().toLowerCase(),
-    gender: gender,
+    teacherGender: teacherGender,
     teacherEmail: teacherEmail.trim().toLowerCase(),
     teacherUsername: teacherUsername.trim().toLowerCase(),
     teacherPassword,
@@ -102,14 +97,16 @@ const registerTeacher = asyncHandler(async (req, res) => {
     teacherAvatar: avatarImage?.url || "",
     teacherContactInfo: teacherContactInfo.trim(),
     teacherAssignedSubjects: teacherAssignedSubjects || [],
-    emailVerificationOtp: parseInt(emailOtp),
-    emailExpiresAt: emailExpiresAt.toString(),
-    passVerificationOtp: parseInt(passOtp),
-    passExpiresAt: passExpiresAt.toString(),
+    emailVerificationCode: emailCode,
+    emailCodeExpiresAt: emailCodeExpiresAt,
+    passwordVerificationCode: passwordCode,
+    passCodeExpiresAt: passwordCodeExpiresAt,
   });
 
   const createdTeacher = await Teacher.findById(teacher._id)
-    .select("-teacherPassword -teacherRefreshToken")
+    .select(
+      "-teacherPassword -teacherRefreshToken -emailVerificationCode -emailCodeExpiresAt -passwordVerificationCode -passCodeExpiresAt"
+    )
     .populate({
       path: "teacherAssignedSubjects",
       select: "subjectName",
@@ -123,24 +120,19 @@ const registerTeacher = asyncHandler(async (req, res) => {
     );
   }
 
-  console.log(teacherEmail, teacherFullName, emailOtp, emailExpiresAt);
+  const verificationEmail = await sendEmailVerificationCode({
+    userEmail: teacherEmail,
+    userName: teacherFullName,
+    verificationCode: emailCode,
+    codeExpireAt: emailCodeExpiresAt,
+  });
 
-  try {
-    const verificationEmail = await mailVerify({
-      userEmail: teacherEmail,
-      userName: teacherFullName,
-      otpCode: emailOtp,
-      otpExpiry: emailExpiresAt,
-    });
-    console.log(verificationEmail);
-
-    if (verificationEmail === true || verificationEmail) {
-      console.log("EMail output", verificationEmail);
-    }
-  } catch (error) {
-    console.log("error", error);
+  if (!verificationEmail === true || !verificationEmail) {
+    throw new ApiError(400, "Email verification failed. Retry");
   }
-
+  await Activity.create({
+    message: `Teacher "${teacher.teacherFullName}" registered`,
+  });
   return res
     .status(201)
     .json(
@@ -148,9 +140,65 @@ const registerTeacher = asyncHandler(async (req, res) => {
     );
 });
 
+const confirmTeacherEmailVerification = asyncHandler(async (req, res) => {
+  const { teacherEmail, emailCode } = req.body;
+
+  // Validate input
+  if (!emailCode) {
+    throw new ApiError(400, "OTP is required");
+  }
+  if (!teacherEmail) {
+    throw new ApiError(400, "Email is required");
+  }
+
+  // Find teacher
+  const teach = await Teacher.findOne({ teacherEmail });
+  if (!teach) {
+    throw new ApiError(404, "Teacher not found");
+  }
+
+  // Check if already verified
+  if (teach.isAuthenticated) {
+    throw new ApiError(400, "Email is already verified");
+  }
+
+  if (!teach.emailVerificationCode) {
+    throw new ApiError(400, "Verification code missing or already verified");
+  }
+
+  // Check expiry
+  const expireTime = teach.emailCodeExpiresAt;
+  const currentTime = Date.now();
+
+  if (currentTime > expireTime) {
+    throw new ApiError(400, "Verification code expired");
+  }
+
+  // Check if OTP matches
+  const isMatch = await teach.isVerificationCodeCorrect(emailCode);
+  if (!isMatch) {
+    throw new ApiError(400, "Invalid verification code");
+  }
+  const updatedTeacher = await Teacher.findOneAndUpdate(
+    {
+      teacherEmail: teacherEmail,
+    },
+    {
+      $set: {
+        isAuthenticated: true,
+        emailVerificationCode: "",
+        emailCodeExpiresAt: 0,
+      },
+    }
+  );
+
+  res
+    .status(200)
+    .json(new Apiresponse(200, updatedTeacher, "Email verified successfully"));
+});
+
 const loginTeacher = asyncHandler(async (req, res) => {
   const { teacherUsername, teacherEmail, teacherPassword } = req.body;
-  console.log(teacherUsername, teacherEmail, teacherPassword);
 
   if ((!teacherUsername || !teacherEmail) && !teacherPassword) {
     throw new ApiError(
@@ -168,7 +216,6 @@ const loginTeacher = asyncHandler(async (req, res) => {
   }
 
   const isPasswordCorrect = await teacher.isPasswordCorrect(teacherPassword);
-  console.log("", isPasswordCorrect);
 
   if (!isPasswordCorrect) {
     throw new ApiError(401, "Invalid credentials.");
@@ -245,7 +292,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     );
   }
 
-  const teacher = await Teacher.findById(decodedToken?._id);
+  const teacher = await Teacher.findById(`${decodedToken?._id}`);
 
   if (!teacher) {
     throw new ApiError(401, "Unauthorized request. Invalid refresh token.");
@@ -316,15 +363,17 @@ const getCurrentTeacher = asyncHandler(async (req, res) => {
   if (!req.teacher) {
     throw new ApiError(401, "Teacher not authenticated.");
   }
-  return res
-    .status(200)
-    .json(
-      new Apiresponse(
-        200,
-        req.teacher,
-        "Current teacher details fetched successfully."
-      )
-    );
+  return res.status(200).json(
+    new Apiresponse(
+      200,
+      {
+        teacherId: req?.teacher?._id,
+        teacherFullName: req?.teacher?.teacherFullName,
+        teacherEmail: req?.teacher?.teacherEmail,
+      },
+      "Current teacher details fetched successfully."
+    )
+  );
 });
 
 const updateTeacherDetails = asyncHandler(async (req, res) => {
@@ -484,6 +533,43 @@ const teacherCount = asyncHandler(async (req, res) => {
     .json(new Apiresponse(200, count, "Teacher count fetched successfully."));
 });
 
+const resendEmailVerification = asyncHandler(async (req, res) => {
+  console.log("resendEmailVerification controller req.body", req.body);
+
+  const { teacherEmail } = req.body;
+  if (!teacherEmail) {
+    throw new ApiError(400, "No email found");
+  }
+  console.log("resendEmailVerification controller teacherEmail", teacherEmail);
+
+  const teacher = await Teacher.findOne({
+    teacherEmail: teacherEmail,
+  });
+
+  if (!teacher) {
+    throw new ApiError(404, "No teacher database found");
+  }
+  const code = Math.floor(100000 + Math.random() * 900000).toString();
+  const emailCode = code;
+  const emailCodeExpiresAt = Date.now() + 15 * 60 * 1000;
+  (teacher.emailVerificationCode = emailCode),
+    (teacher.emailCodeExpiresAt = emailCodeExpiresAt),
+    await teacher.save();
+  const verificationEmail = await sendEmailVerificationCode({
+    userEmail: teacher.teacherEmail,
+    userName: teacher.teacherFullName,
+    verificationCode: emailCode,
+    codeExpireAt: emailCodeExpiresAt,
+  });
+
+  if (!verificationEmail === true || !verificationEmail) {
+    throw new ApiError(400, "Email verification failed. Retry");
+  }
+  return res
+    .status(201)
+    .json(new Apiresponse(201, "Verification code sent successfully."));
+});
+
 export {
   registerTeacher,
   loginTeacher,
@@ -496,4 +582,6 @@ export {
   getTeacherById,
   getAllTeachers,
   teacherCount,
+  confirmTeacherEmailVerification,
+  resendEmailVerification,
 };

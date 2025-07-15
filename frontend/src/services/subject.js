@@ -2,13 +2,17 @@ import axios from "axios";
 
 // Get subject count
 const subjectCount = async () => {
-  const response = await axios.get("/api/subjects/count");
+  const response = await axios.get("/api/subjects/count", {
+    withCredentials: true, // ✅ Important for cookies/session
+  });
   return response.data;
 };
 
 // Get all subjects
 const getSubjects = async () => {
-  const response = await axios.get("/api/subjects/");
+  const response = await axios.get("/api/subjects", {
+    withCredentials: true, // ✅ Important for cookies/session
+  });
   return response.data.data;
 };
 
@@ -22,7 +26,9 @@ const addSubject = async (subjectData) => {
     subjectMaxMarksPractical: subjectData?.subjectMaxMarksPractical,
     subjectCreditPoints: subjectData?.subjectCreditPoints,
   };
-  const response = await axios.post("/api/subjects/", subject);
+  const response = await axios.post("/api/subjects", subject, {
+    withCredentials: true, // ✅ Important for cookies/session
+  });
   return response.data;
 };
 
@@ -38,13 +44,17 @@ const updateSubject = async (id, subjectData) => {
     subjectCreditPoints: subjectData?.subjectCreditPoints,
   };
   const { _id, ...data } = subject;
-  const response = await axios.patch(`/api/subjects/${id}`, data);
+  const response = await axios.patch(`/api/subjects/${id}`, data, {
+    withCredentials: true, // ✅ Important for cookies/session
+  });
   return response.data;
 };
 
 // Delete a subject
 const deleteSubject = async (id) => {
-  const response = await axios.delete(`/api/subjects/${id}`);
+  const response = await axios.delete(`/api/subjects/${id}`, {
+    withCredentials: true, // ✅ Important for cookies/session
+  });
   return response.data;
 };
 

@@ -21,19 +21,15 @@ const AttendanceSchema = new mongoose.Schema(
       type: String,
       required: true,
       enum: [
-        "First semester",
-        "Second semester",
-        "Third semester",
-        "Fourth semester",
-        "Fifth semester",
-        "Sixth semester",
-        "Seventh semester",
-        "Eighth semester",
+        "First",
+        "Second",
+        "Third",
+        "Fourth",
+        "Fifth",
+        "Sixth",
+        "Seventh",
+        "Eighth",
       ],
-    },
-    attendanceDate: {
-      type: Date,
-      required: true,
     },
     attendanceStatus: {
       type: String,
@@ -41,6 +37,10 @@ const AttendanceSchema = new mongoose.Schema(
       required: true,
       default: "Absent",
     },
+    attendanceDate:{
+      type:Date,
+      required:true,
+    }
   },
   {
     timestamps: true,

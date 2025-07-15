@@ -54,9 +54,7 @@ const Login = () => {
   };
 
   const handleSignUp = () => {
-    setTimeout(() => {
-      navigate("/register");
-    }, 1000);
+    navigate("/register");
   };
 
   return (

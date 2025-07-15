@@ -34,7 +34,8 @@ import {
   subjectRoutes,
   teacherRoutes,
 } from "./routes/app.routes.js";
-import { verifyJWT } from "./middleware/auth.middleware.js";
+import { recentActivityRoute } from "./routes/recentActivity.route.js";
+import { countDocuments } from "./routes/countDoc.js";
 
 // ⭐Block all routes that don't start with /website/api
 app.use((req, res, next) => {
@@ -54,6 +55,8 @@ app.use("/api/setting", settingRoutes);
 app.use("/api/student", studentRoutes);
 app.use("/api/subjects", subjectRoutes);
 app.use("/api/teacher", teacherRoutes);
+app.use("/api", recentActivityRoute);
+app.use("/api", countDocuments);
 
 //⭐ No endpoint route block
 // app.all("/api/*", (req, res, next) => {

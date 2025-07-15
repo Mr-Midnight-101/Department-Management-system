@@ -216,12 +216,6 @@ const Course = () => {
         align: "left",
       },
       {
-        field: "courseTerms",
-        headerName: "Terms",
-        headerAlign: "center",
-        align: "left",
-      },
-      {
         field: "courseCreditUnits",
         headerName: "Credit Units",
         headerAlign: "center",
@@ -332,29 +326,6 @@ const Course = () => {
                   >
                     {durationoptions.map((item) => (
                       <MenuItem value={item.value} key={item.value}>
-                        {item.label}
-                      </MenuItem>
-                    ))}
-                  </TextField>
-                  <TextField
-                    size="small"
-                    label="Terms"
-                    required
-                    select
-                    error={!!registerError?.courseTermError}
-                    helperText={registerError?.courseTermError}
-                    variant="outlined"
-                    name="courseTerms"
-                    value={registerForm?.courseTerms || ""}
-                    onChange={(e) =>
-                      setRegisterForm({
-                        ...registerForm,
-                        [e.target.name]: e.target.value,
-                      })
-                    }
-                  >
-                    {semesterOptions.map((item) => (
-                      <MenuItem key={item.value} value={item.value}>
                         {item.label}
                       </MenuItem>
                     ))}

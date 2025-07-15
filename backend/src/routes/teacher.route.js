@@ -13,11 +13,14 @@ import {
   getTeacherById,
   getAllTeachers,
   teacherCount,
+  confirmTeacherEmailVerification,
+  resendEmailVerification,
 } from "../controllers/teacher.controller.js";
 import { verifyJWT } from "../middleware/auth.middleware.js";
 import { upload } from "../middleware/multer.middleware.js";
 
 const teacherRoutes = Router();
+teacherRoutes.route("/refresh-token").post(verifyJWT, refreshAccessToken);
 // Route to get the count of all teachers
 teacherRoutes.route("/count").get(teacherCount);
 
@@ -29,12 +32,14 @@ teacherRoutes
   .route("/register")
   .post(upload.single("teacherAvatar"), registerTeacher);
 
+teacherRoutes.route("/verifyTeacher").post(confirmTeacherEmailVerification);
+teacherRoutes.route("/resend-code").post(resendEmailVerification);
+
 // Route for teacher login
 teacherRoutes.route("/login").post(loginTeacher);
 
 //🌟 secure routes
 // Route to refresh access token using refresh token
-teacherRoutes.route("/refresh-token").post(verifyJWT, refreshAccessToken);
 
 // Route for teacher logout (Requires authentication)
 teacherRoutes.route("/logout").post(verifyJWT, logoutTeacher);

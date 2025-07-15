@@ -15,15 +15,14 @@ const Teachers = () => {
   const fetchTeachers = useCallback(async () => {
     try {
       const response = await getAllTeachers();
-    const mappedRow = response.map((teach, i) => ({
-      ...teach,
-      id: teach._id,
-      index: i + 1,
-    }));
-    setTeachers(mappedRow);
+      const mappedRow = response.map((teach, i) => ({
+        ...teach,
+        id: teach._id,
+        index: i + 1,
+      }));
+      setTeachers(mappedRow);
     } catch (error) {
       console.log(error);
-      
     }
   }, []);
 
@@ -43,6 +42,10 @@ const Teachers = () => {
       {
         field: "teacherFullName",
         headerName: "Name",
+      },
+      {
+        field: "teacherGender",
+        headerName: "gender",
       },
       {
         field: "teacherEmail",

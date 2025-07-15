@@ -17,6 +17,7 @@ import Login from "./pages/Login/Login.jsx";
 import Register from "./pages/Register/Register.jsx";
 import UserProvider from "./pages/UserContext/UserContext.jsx";
 import UpdateUser from "./pages/UpdateUser/UpdateUser.jsx";
+import EmailVerification from "./pages/EmailVerification/EmailVerification.jsx";
 
 function App() {
   const [theme, colorMode] = useThemeMode();
@@ -29,7 +30,11 @@ function App() {
             <Routes>
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
-              <Route to="/" element={<Layout />}>
+              <Route
+                path="/emailVerification"
+                element={<EmailVerification />}
+              />
+              <Route path="/" element={<Layout />}>
                 <Route index element={<Dashboard />} />
                 <Route path="/student" element={<Students />} />
                 <Route path="/course" element={<Course />} />

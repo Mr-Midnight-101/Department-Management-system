@@ -37,23 +37,6 @@ const CourseSchema = new mongoose.Schema(
         message: "Unknown Value.",
       },
     },
-    courseTerms: {
-      type: String,
-      required: [true, "Course term (semester) is required."],
-      enum: {
-        values: [
-          "1 semester",
-          "2 semesters",
-          "3 semesters",
-          "4 semesters",
-          "5 semesters",
-          "6 semesters",
-          "7 semesters",
-          "8 semesters",
-        ],
-        message: "Unknown Value.",
-      },
-    },
     courseCreditUnits: {
       type: Number,
       required: [true, "Course credit units are required."],

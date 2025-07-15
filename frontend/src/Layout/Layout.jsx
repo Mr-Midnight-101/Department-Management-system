@@ -6,7 +6,6 @@ import "../App.css";
 
 const Layout = () => {
   const [collapsed, setCollapsed] = useState(false);
-
   return (
     <div
       className="app"

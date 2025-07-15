@@ -11,6 +11,7 @@ import {
   DialogContent,
   IconButton,
   Tooltip,
+  MenuItem,
 } from "@mui/material";
 import { getColorTokens } from "../../theme/theme";
 import LogoSync from "../../components/LogoSync";
@@ -20,6 +21,7 @@ import { registerTeacher } from "../../services/teacher";
 import { useNavigate } from "react-router-dom";
 import FirstPageIcon from "@mui/icons-material/FirstPage";
 import { UserContext } from "../UserContext/UserContext";
+import { genderDropDown } from "./genderDropDown.js";
 
 const Register = () => {
   const colors = getColorTokens(useTheme().palette.mode);
@@ -33,6 +35,7 @@ const Register = () => {
   const [resgiterLoading, setRegisterLoading] = useState(false);
   const [isError, setError] = useState(false);
   const [isSuccess, setSuccess] = useState(false);
+  const [teacher, setTeacher] = useState("");
 
   const handleRegister = async (formData, file) => {
     setRegisterLoading(true);
@@ -51,14 +54,14 @@ const Register = () => {
     try {
       const response = await registerTeacher(formData, file);
       if (response?.status == 201) {
+        const teach = response?.data?.data;
         setSuccess(true);
         setSuccessMsg(response?.data?.message);
         setFormData({});
         setFile(null);
         setRegisterLoading(false);
-        setTimeout(() => {
-          navigate("/login");
-        }, 5000);
+        setTeacher(teach);
+        navigate("/emailVerification", { state: { teacherObject: teach } });
         return;
       }
     } catch (error) {
@@ -252,6 +255,34 @@ const Register = () => {
             }}
           />
           <TextField
+            fullWidth
+            select
+            size="small"
+            name="teacherGender"
+            variant="outlined"
+            label="Gender"
+            value={formData?.teacherGender || ""}
+            onChange={(e) => {
+              setFormData({
+                ...formData,
+                [e.target.name]: e.target.value,
+              });
+            }}
+            slotProps={{
+              select: {
+                MenuProps: {
+                  disableAutoFocusItem: true, // ✅ Fix for ARIA issue
+                },
+              },
+            }}
+          >
+            {genderDropDown.map((item) => (
+              <MenuItem value={item.value} key={item.value}>
+                {item.label}
+              </MenuItem>
+            ))}
+          </TextField>
+          <TextField
             disabled={resgiterLoading}
             fullWidth
             error={!!registerError.idError}
@@ -338,7 +369,8 @@ const Register = () => {
           sx={{
             background: colors.gradient[100],
           }}
-          onClick={() => {
+          onClick={(e) => {
+            e.preventDefault();
             handleRegister(formData, file);
           }}
           disabled={resgiterLoading}

@@ -5,9 +5,13 @@ import ApiError from "../utils/ApiError.js";
 import Apiresponse from "../utils/Apiresponse.js";
 import { Subject } from "../models/subject.model.js";
 import { capitalize } from "../utils/capitalize.js";
+import { Activity } from "../models/recentActivity.model.js";
 
 const populateSubject = (query) => {
-  return query.populate({ path: "subjectTeachers", select: "teacherFullName _id" });
+  return query.populate({
+    path: "subjectTeachers",
+    select: "teacherFullName _id",
+  });
 };
 
 const addSubject = asyncHandler(async (req, res) => {
@@ -40,13 +44,16 @@ const addSubject = asyncHandler(async (req, res) => {
   if (typeof subjectMaxMarksTheory !== "number" || subjectMaxMarksTheory < 0) {
     throw new ApiError(400, "Invalid value for theory marks.");
   }
-  if (typeof subjectMaxMarksPractical !== "number" || subjectMaxMarksPractical < 0) {
+  if (
+    typeof subjectMaxMarksPractical !== "number" ||
+    subjectMaxMarksPractical < 0
+  ) {
     throw new ApiError(400, "Invalid value for practical marks.");
   }
   if (typeof subjectCreditPoints !== "number" || subjectCreditPoints < 0) {
     throw new ApiError(400, "Invalid value for subject credit points.");
   }
-//todo add teachers as well in future..⭐
+  //todo add teachers as well in future..⭐
   if (subjectTeachers !== undefined && !Array.isArray(subjectTeachers)) {
     throw new ApiError(400, "Subject teachers must be provided as an array.");
   }
@@ -80,7 +87,7 @@ const addSubject = asyncHandler(async (req, res) => {
   if (!createdSubject) {
     throw new ApiError(500, "Something went wrong while adding the subject.");
   }
-
+  await Activity.create({ message: `Subject "${subject?.subjectName}" added` });
   return res
     .status(201)
     .json(new Apiresponse(201, createdSubject, "Subject added successfully."));
@@ -137,7 +144,8 @@ const updateSubject = asyncHandler(async (req, res) => {
   }
   if (
     subjectMaxMarksPractical !== undefined &&
-    (typeof subjectMaxMarksPractical !== "number" || subjectMaxMarksPractical < 0)
+    (typeof subjectMaxMarksPractical !== "number" ||
+      subjectMaxMarksPractical < 0)
   ) {
     throw new ApiError(400, "Invalid value for practical marks.");
   }
@@ -162,7 +170,9 @@ const updateSubject = asyncHandler(async (req, res) => {
           ...(subjectCode && { subjectCode }),
           ...(subjectName && { subjectName }),
           ...(subjectMaxMarksTheory !== undefined && { subjectMaxMarksTheory }),
-          ...(subjectMaxMarksPractical !== undefined && { subjectMaxMarksPractical }),
+          ...(subjectMaxMarksPractical !== undefined && {
+            subjectMaxMarksPractical,
+          }),
           ...(subjectCreditPoints !== undefined && { subjectCreditPoints }),
           ...(subjectTeachers !== undefined && {
             subjectTeachers: subjectTeachers || [],
@@ -179,7 +189,9 @@ const updateSubject = asyncHandler(async (req, res) => {
   if (!updatedSubject) {
     throw new ApiError(404, "Subject not found for update.");
   }
-
+  await Activity.create({
+    message: `Subject "${updateSubject?.subjectName}" registered`,
+  });
   return res
     .status(200)
     .json(
@@ -198,6 +210,7 @@ const deleteSubject = asyncHandler(async (req, res) => {
   if (!deletedSubject) {
     throw new ApiError(404, "Subject not found for deletion.");
   }
+  await Activity.create({ message: `Subject "${deleteSubject?.subjectName}" deleted` });
   return res
     .status(200)
     .json(
@@ -212,4 +225,10 @@ const subjectCount = asyncHandler(async (req, res) => {
     .json(new Apiresponse(200, count, "Subject count fetched successfully."));
 });
 
-export { addSubject, getAllSubjects, updateSubject, deleteSubject, subjectCount };
+export {
+  addSubject,
+  getAllSubjects,
+  updateSubject,
+  deleteSubject,
+  subjectCount,
+};

@@ -1,5 +1,6 @@
 /* eslint-disable no-unused-vars */
-import React, { createContext, useState } from "react";
+import axios from "axios";
+import React, { createContext, useEffect, useState } from "react";
 
 // 1. Create the context
 export const UserContext = createContext();
@@ -8,6 +9,11 @@ export const UserContext = createContext();
 const UserProvider = ({ children }) => {
   const [user, setUser] = useState(null);
 
+//   useEffect(() => {
+//   axios.get("/api/teacher/user", { withCredentials: true })
+//     .then(res => setUser(res.data.user))  // ✅ only called on app load
+//     .catch(() => setUser(null));
+// }, []);
   // Update user state with new user data
   const updateUser = (userData) => {
     setUser(userData);

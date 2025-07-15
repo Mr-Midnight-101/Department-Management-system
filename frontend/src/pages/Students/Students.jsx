@@ -6,7 +6,7 @@ import React, {
   useRef,
   useState,
 } from "react";
-
+import SearchIcon from "@mui/icons-material/Search";
 //date setup
 import dayjs from "dayjs";
 
@@ -21,6 +21,9 @@ import {
   MenuItem,
   TextField,
   useTheme,
+  IconButton,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 
 // Validation function (can be reused for both register and
@@ -29,11 +32,12 @@ import validateStudentForm from "./utils/validateStudentForm.js";
 //API calls
 import {
   deleteStudent,
+  filterStudentByCourse,
   getStudents,
   studentRegister,
   updateStudentDetails,
 } from "../../services/student.js";
-
+import { semesterList } from "../../utils/SemesterList.js";
 //drop down options
 import { categoryOptions, studentTypeOptions } from "./utils/dropDownItems.js";
 import GridActionButton from "../../components/GridActionButton.jsx";
@@ -68,6 +72,7 @@ const Students = () => {
       const list = await courseList();
       const mappedlist = list?.data?.data;
       setCourseChoices(mappedlist);
+      setFilterCourse(mappedlist);
     } catch (error) {
       setCourseError(error?.response?.data?.message);
     }
@@ -79,17 +84,17 @@ const Students = () => {
   const [students, setStudents] = useState([]);
   const fetchStudents = useCallback(async () => {
     try {
-      const data = await getStudents();
-      const mappedRows = data.map((student, i) => ({
-        ...student,
-        id: student._id || i,
-        index: i + 1,
-        ...student.studentAddress,
-        city: student.studentAddress?.city || "",
-        state: student.studentAddress?.state || "",
-      }));
+      //const data = await getStudents();
+      // const mappedRows = data.map((student, i) => ({
+      //   ...student,
+      //   id: student._id || i,
+      //   index: i + 1,
+      //   ...student.studentAddress,
+      //   city: student.studentAddress?.city || "",
+      //   state: student.studentAddress?.state || "",
+      // }));
       setDatafetched(true);
-      setStudents(mappedRows);
+      //  setStudents(mappedRows);
     } catch (error) {
       console.error("Error fetching students:", error);
       setIsFetchError(error);
@@ -333,6 +338,38 @@ const Students = () => {
     [studentList]
   );
 
+  const [filter, setFilter] = useState({});
+  const [filterError, setFilterError] = useState({});
+  const [filterCourseList, setFilterCourse] = useState([]);
+  const findBycourse = async (filter) => {
+    setIsFetchError("");
+    setFilterError("");
+    setStudents([]);
+    console.log(filter);
+
+    try {
+      const apiCall = await filterStudentByCourse(filter).then((res) => {
+        console.log("response ", res?.data?.data);
+        return res?.data?.data;
+      });
+      const mappedRow = apiCall.map((student, i) => ({
+        ...student,
+        id: student._id || i,
+        index: i + 1,
+        ...student.studentAddress,
+        city: student.studentAddress?.city || "",
+        state: student.studentAddress?.state || "",
+      }));
+      console.log(mappedRow);
+
+      setStudents(mappedRow);
+    } catch (error) {
+      console.log(error?.response?.data?.message);
+      setFilterError(error?.response?.data?.message);
+      setStudents([]);
+      setIsFetchError(error?.response?.data?.message);
+    }
+  };
   return (
     <Box width="100%" maxheight="80vh">
       <PageSectionWrapper>
@@ -342,7 +379,85 @@ const Students = () => {
           onButtonClick={openRegisterDialog}
           buttonLabel={"Add Student"}
         />
-
+        <Box display="flex" gap={1} alignItems="center" width="100%">
+          <Box> Search student: </Box>
+          <Box display="flex" gap={1}>
+            <TextField
+              size="medium"
+              label="Course"
+              placeholder="Course"
+              required
+              select
+              error={!!filterError?.filterCourse} // Assuming registerError.courseError exists for validation
+              helperText={
+                filterError?.filterCourse ||
+                (filterCourseList.length === 0 && !courseError
+                  ? "No courses available"
+                  : "")
+              }
+              variant="outlined"
+              name="courseName"
+              value={filter?.courseName || ""}
+              onChange={(e) => {
+                setFilter((prev) => ({
+                  ...prev,
+                  courseName: e.target.value,
+                }));
+              }}
+              sx={{
+                width: "100px",
+                // background: colors.ArtyClick[100],
+              }}
+              disabled={filterCourseList.length === 0 && !courseError}
+            >
+              {/* IMPORTANT: Only MenuItem children allowed */}
+              {filterCourseList.length > 0 &&
+                filterCourseList.map((course) => (
+                  <MenuItem key={course?._id} value={course?._id}>
+                    {course?.courseCode}
+                  </MenuItem>
+                ))}
+            </TextField>
+            <TextField
+              sx={{
+                width: "100px",
+                // background: colors.ArtyClick[100],
+              }}
+              label="Semester"
+              size="medium"
+              select
+              name="semester"
+              variant="outlined"
+              value={filter?.semester || ""}
+              onChange={(e) => {
+                setFilter((prev) => ({
+                  ...prev,
+                  semester: e.target.value,
+                }));
+              }}
+            >
+              {semesterList.map((sem, idx) => (
+                <MenuItem key={sem.value || idx} value={sem.value}>
+                  {sem.value}
+                </MenuItem>
+              ))}
+            </TextField>
+          </Box>
+          <IconButton
+            onClick={() => {
+              findBycourse(filter);
+            }}
+          >
+            <SearchIcon />
+          </IconButton>
+          <Button
+            onClick={() => {
+              setFilter("");
+            }}
+          >
+            Clear
+          </Button>
+        </Box>
         {/* DataGrid */}
         <GridWrapper
           sx={{
@@ -455,6 +570,26 @@ const Students = () => {
                           {c?.courseCode}
                         </MenuItem>
                       ))}
+                  </TextField>
+                  <TextField
+                    label="Semester"
+                    size="small"
+                    select
+                    name="StudentCurrentSemester"
+                    variant="outlined"
+                    value={registerForm?.StudentCurrentSemester || ""}
+                    onChange={(e) => {
+                      setRegisterForm((prev) => ({
+                        ...prev,
+                        StudentCurrentSemester: e.target.value,
+                      }));
+                    }}
+                  >
+                    {semesterList.map((item, idx) => (
+                      <MenuItem key={item.value || idx} value={item.value}>
+                        {item.value}
+                      </MenuItem>
+                    ))}
                   </TextField>
                   <TextField
                     size="small"
@@ -791,11 +926,31 @@ const Students = () => {
                 >
                   {/* IMPORTANT: Only MenuItem children allowed */}
                   {courseChoices.length > 0 &&
-                    courseChoices.map((c) => (
-                      <MenuItem key={c?._id} value={c?._id}>
+                    courseChoices.map((c, idx) => (
+                      <MenuItem key={c?._id || idx} value={c?._id}>
                         {c?.courseCode}
                       </MenuItem>
                     ))}
+                </TextField>
+                <TextField
+                  label="Semester"
+                  size="small"
+                  select
+                  variant="outlined"
+                  name="StudentCurrentSemester"
+                  value={selectedStudent?.StudentCurrentSemester || ""}
+                  onChange={(e) => {
+                    setSelectedStudent((prev) => ({
+                      ...prev,
+                      [e.target.name]: e.target.value,
+                    }));
+                  }}
+                >
+                  {semesterList.map((item, idx) => (
+                    <MenuItem key={item.value || idx} value={item.value}>
+                      {item.value}
+                    </MenuItem>
+                  ))}
                 </TextField>
                 <TextField
                   label="Roll no."
@@ -1012,7 +1167,15 @@ const Students = () => {
           </FormDialogWrapper>
         )}
       </Box>
-      <Box>{isfetchError !== null && <Box>{isfetchError}</Box>}</Box>
+
+      {isfetchError && (
+        <Snackbar open={!!isfetchError} autoHideDuration={10}>
+          <Alert variant="filled" severity="error">
+            {isfetchError}
+            {"\n Retry"}
+          </Alert>
+        </Snackbar>
+      )}
     </Box>
   );
 };

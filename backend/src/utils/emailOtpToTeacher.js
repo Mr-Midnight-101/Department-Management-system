@@ -2,34 +2,30 @@ import nodemailer from "nodemailer";
 import dotenv from "dotenv";
 dotenv.config();
 
-const test = nodemailer.createTestAccount();
 const transporter = nodemailer.createTransport({
-  name:"CampSync",
-  host: "smtp.ethereal.email",
+  name: `${process.env.SMTP_name}`,
+  host: process.env.SMTP_Server,
   port: 587,
   auth: {
-    user: "ransom.olson68@ethereal.email",
-    pass: "FWwzh8WFMEpc82STtq",
+    user: `${process.env.Login_brevo}`,
+    pass: `${process.env.brevo_pass}`,
   },
   tls: {
     rejectUnauthorized: false,
   },
 });
 
-export const mailVerify = async ({
+export const sendEmailVerificationCode = async ({
   userEmail,
   userName,
-  otpCode,
-  otpExpiry,
+  verificationCode,
+  codeExpireAt,
 }) => {
-  console.log(userEmail, userName, otpCode, otpExpiry);
   if (!userEmail || !userName) {
-    console.log("Not available false");
     return false;
   }
-  const otpExpiryIST = new Date(
-    Date.now(otpExpiry) + 10 * 60 * 1000
-  ).toLocaleString("en-IN", {
+
+  const codeExpireAtIST = new Date(codeExpireAt).toLocaleString("en-IN", {
     timeZone: "Asia/Kolkata",
     hour12: true,
   });
@@ -88,8 +84,8 @@ export const mailVerify = async ({
           <h2>One-Time Password (OTP)</h2>
         </div>
         <p>Hello ${userName},</p>
-        <p>Use the following OTP to verify your email. This code is valid for 10 minutes:</p>
-        <div class="otp-box">${otpCode}</div>
+        <p>Use the following OTP to verify your email. This code is valid for 10 minutes ${codeExpireAtIST} :</p>
+        <div class="otp-box">${verificationCode}</div>
         <p class="info">If you didn’t request this, you can safely ignore this email.</p>
         <div class="footer">
           &copy; 2025 CampSync. All rights reserved.
@@ -100,19 +96,18 @@ export const mailVerify = async ({
 
   try {
     const result = await transporter.sendMail({
-      from: `"CampSync" <ransom.olson68@ethereal.email>`,
+      from: `"CampSync" <${process.env.sender}>`,
       to: userEmail,
       subject: "Welcome to CampSync",
-      text: `Your OTP is: ${otpCode}. It expires at ${otpExpiryIST}.`,
+      text: `Your OTP is: ${verificationCode}. It expires at ${codeExpireAtIST}.`,
       html: htmlContent,
     });
-
-    console.log("Email", nodemailer.getTestMessageUrl(result));
-    console.log(result);
-
-    return true;
+    if (result.response.includes("OK")) {
+      return true;
+    } else {
+      return false;
+    }
   } catch (error) {
-    console.error("Email send failed:", error);
     return false;
   }
 };

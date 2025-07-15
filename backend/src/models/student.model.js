@@ -90,7 +90,15 @@ const studentSchema = new mongoose.Schema(
       type: Number,
       required: [true, "Admission year is required"],
       min: [1900, "Admission year cannot be before 1900"],
-      max: new Date().getFullYear() + 1,
+      max: [
+        new Date().getFullYear() + 1,
+        "Admission year cannot be in the future",
+      ],
+    },
+    studentCurrentSemester: {
+      type: String,
+      required: [true, "Current semester is required"],
+      trim: true,
     },
   },
   {

@@ -11,7 +11,7 @@ const teacherSchema = new mongoose.Schema(
       lowercase: true,
       match: [/^[a-zA-Z ]+$/, "Full name must contain only letters"],
     },
-    gender: {
+    teacherGender: {
       type: String,
       enum: ["Male", "Female"],
       required: true,
@@ -77,16 +77,16 @@ const teacherSchema = new mongoose.Schema(
       type: String,
     },
     isAuthenticated: { type: Boolean, default: false },
-    emailVerificationOtp: {
+    emailVerificationCode: {
       type: String,
       default: "",
     },
-    emailExpiresAt: {
+    emailCodeExpiresAt: {
       type: Number,
       default: 0,
     },
-    passVerificationOtp: { type: String, default: "" },
-    passExpiresAt: { type: Number, default: 0 },
+    passwordVerificationCode: { type: String, default: "" },
+    passCodeExpiresAt: { type: Number, default: 0 },
   },
   {
     timestamps: true,
@@ -141,34 +141,26 @@ teacherSchema.methods.generateRefreshToken = function () {
 };
 
 teacherSchema.pre("save", async function (next) {
-  if (!this.isModified("emailVerificationOtp")) return next();
+  console.log("pre middleware inside model", this.emailVerificationCode)
+  if (!this.isModified("emailVerificationCode")) return next();
+
   try {
-    this.emailVerificationOtp = await bcrypt.hash(
-      this.emailVerificationOtp,
-      10
+    this.emailVerificationCode = await bcrypt.hash(
+      this.emailVerificationCode,
+      6
     );
     next();
   } catch (error) {
     next(error);
   }
 });
-teacherSchema.pre("save", async function (next) {
-  if (!this.isModified("passVerificationOtp")) return next();
+
+teacherSchema.methods.isVerificationCodeCorrect = async function (emailCode) {
+  console.log(" Code verification in model ", emailCode);
   try {
-    this.passVerificationOtp = await bcrypt.hash(this.passVerificationOtp, 10);
-    next();
+    return await bcrypt.compare(emailCode, this.emailVerificationCode);
   } catch (error) {
-    next(error);
-  }
-});
-teacherSchema.methods.compareOtp = async function (emailVerifyOtp) {
-  try {
-    const compare = await bcrypt.compare(
-      emailVerifyOtp,
-      this.emailVerificationOtp
-    );
-    return compare;
-  } catch (error) {
+    console.error("Error comparing passwords:", error);
     return false;
   }
 };

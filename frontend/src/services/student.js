@@ -2,10 +2,18 @@
 import axios from "axios";
 
 export const studentCount = async () =>
-  await axios.get("/api/student/count").then((res) => res.data);
+  await axios
+    .get("/api/student/count", {
+      withCredentials: true, // ✅ Important for cookies/session
+    })
+    .then((res) => res.data);
 
 export const getStudents = async () =>
-  await axios.get("/api/student/").then((res) => res.data.data);
+  await axios
+    .get("/api/student", {
+      withCredentials: true, // ✅ Important for cookies/session
+    })
+    .then((res) => res.data.data);
 
 export const studentRegister = async (registerData) => {
   const student = {
@@ -27,10 +35,13 @@ export const studentRegister = async (registerData) => {
     studentCurrentCourseId: registerData?.studentCurrentCourseId,
     studentType: registerData?.studentType,
     studentAdmissionYear: registerData?.studentAdmissionYear,
+    StudentCurrentSemester: registerData?.StudentCurrentSemester,
   };
 
   console.log("student just before api call", student);
-  return await axios.post("/api/student/", student);
+  return await axios.post("/api/student", student, {
+    withCredentials: true, // ✅ Important for cookies/session
+  });
 };
 
 export const updateStudentDetails = async (updateData) => {
@@ -54,12 +65,35 @@ export const updateStudentDetails = async (updateData) => {
     studentCurrentCourseId: updateData?.studentCurrentCourseId,
     studentType: updateData?.studentType,
     studentAdmissionYear: updateData?.studentAdmissionYear,
+    StudentCurrentSemester: updateData?.StudentCurrentSemester,
   };
   const { _id, ...data } = student;
-  return await axios.patch(`/api/student/${id}`, data).then((res) => res.data);
+  return await axios
+    .patch(`/api/student/${id}`, data, {
+      withCredentials: true, // ✅ Important for cookies/session
+    })
+    .then((res) => res.data);
 };
 
 export const deleteStudent = async (student) => {
   const { _id } = student;
-  return await axios.delete(`/api/student/${_id}`).then((res) => res.data);
+  return await axios
+    .delete(`/api/student/${_id}`, {
+      withCredentials: true, // ✅ Important for cookies/session
+    })
+    .then((res) => res.data);
+};
+
+export const filterStudentByCourse = async (filter) => {
+  console.log("front services", filter?.courseName);
+
+  const studentData = {
+    courseName: filter?.courseName,
+  };
+  if (filter?.semester) {
+    studentData.semester = filter?.semester;
+  }
+  return await axios.post("/api/student/filter", studentData, {
+    withCredentials: true,
+  });
 };

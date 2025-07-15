@@ -4,7 +4,7 @@ import Apiresponse from "../utils/Apiresponse.js";
 import { Student } from "../models/student.model.js";
 import dayjs from "dayjs";
 import { capitalize } from "../utils/capitalize.js";
-
+import { Activity } from "../models/recentActivity.model.js";
 const populateStudent = (query) => {
   return query.populate({
     path: "studentCurrentCourseId",
@@ -24,6 +24,7 @@ const addStudent = asyncHandler(async (req, res) => {
     studentAddress,
     studentCategory,
     studentCurrentCourseId,
+    StudentCurrentSemester,
     studentType,
     studentAdmissionYear,
   } = req.body;
@@ -121,6 +122,7 @@ const addStudent = asyncHandler(async (req, res) => {
     studentCurrentCourseId: studentCurrentCourseId || "",
     studentType: studentType || "Regular",
     studentAdmissionYear: studentAdmissionYear || new Date().getFullYear(),
+    StudentCurrentSemester: StudentCurrentSemester,
   });
 
   const student = await populateStudent(Student.findById(createdStudent._id));
@@ -131,7 +133,9 @@ const addStudent = asyncHandler(async (req, res) => {
       "An unexpected error occurred while adding the student."
     );
   }
-
+  await Activity.create({
+    message: `Student "${student?.studentFullNameme}" registered`,
+  });
   return res
     .status(201)
     .json(
@@ -181,6 +185,7 @@ const updateStudent = asyncHandler(async (req, res) => {
     studentCurrentCourseId,
     studentType,
     studentAdmissionYear,
+    StudentCurrentSemester,
   } = req.body;
 
   if (
@@ -196,7 +201,8 @@ const updateStudent = asyncHandler(async (req, res) => {
       studentCategory ||
       studentCurrentCourseId ||
       studentType ||
-      studentAdmissionYear
+      studentAdmissionYear ||
+      StudentCurrentSemester
     )
   ) {
     throw new ApiError(400, "No valid fields provided for update.");
@@ -266,6 +272,7 @@ const updateStudent = asyncHandler(async (req, res) => {
           }) ||
             ""),
           ...(studentAdmissionYear !== undefined && { studentAdmissionYear }),
+          ...(StudentCurrentSemester && { StudentCurrentSemester }),
         },
       },
       {
@@ -278,7 +285,9 @@ const updateStudent = asyncHandler(async (req, res) => {
   if (!updatedStudent) {
     throw new ApiError(404, "Student not found for update.");
   }
-
+  await Activity.create({
+    message: `Student "${updateStudent?.studentFullNameme}" details updated`,
+  });
   return res
     .status(200)
     .json(
@@ -304,9 +313,45 @@ const deleteStudent = asyncHandler(async (req, res) => {
   const student = await populateStudent(Student.findByIdAndDelete(id));
 
   if (!student) throw new ApiError(404, "Cannot find student");
+  await Activity.create({
+    message: `Student "${student?.studentFullNameme}" details is removed`,
+  });
   return res
     .status(200)
     .json(new Apiresponse(200, student, "Student deleted successfully"));
+});
+
+const studentbyCourseAndSemester = asyncHandler(async (req, res) => {
+  console.log('controller', req.body);
+  
+  const { courseName, semester } = req.body;
+
+  // Validate input
+  if (!courseName) {
+    throw new ApiError(400, "Course name is required.");
+  }
+
+  // Build dynamic filter
+  const filter = {
+    studentCurrentCourseId: courseName, // Should be ID or name based on your DB
+  };
+
+  if (semester) {
+    filter.studentCurrentSemester = semester;
+  }
+
+  // Fetch data
+  const studentList = await Student.find(filter);
+
+  // Correct way to check for empty array
+  if (!studentList || studentList.length === 0) {
+    throw new ApiError(404, "No students found for given criteria.");
+  }
+
+  // Success response
+  return res
+    .status(200)
+    .json(new Apiresponse(200, studentList, "Students fetched successfully."));
 });
 
 export {
@@ -316,4 +361,5 @@ export {
   updateStudent,
   studentCount,
   deleteStudent,
+  studentbyCourseAndSemester,
 };
