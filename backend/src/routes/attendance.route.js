@@ -1,27 +1,23 @@
 import { Router } from "express";
 import {
+  getStudentsByCourseAndSemester,
+  ModifyAttendance,
+  removeStudentAttendance,
   addAttendance,
-  showAllAttendance,
-  getAttendanceById,
-  editAttendance,
-  attendanceCount,
-  filterAttendance,
+  attendanceCount
 } from "../controllers/attendance.controller.js";
 
 const attendanceRoutes = Router();
 
 attendanceRoutes.route("/count").get(attendanceCount); // get attendance count
 
-attendanceRoutes
-  .route("/")
-  .post(addAttendance) //add a new attendance record
-  .get(showAllAttendance); //get all attendance records
+attendanceRoutes.route("/").post(addAttendance); //add a new attendance record
 
 attendanceRoutes
   .route("/:id")
-  .get(getAttendanceById) // get a specific attendance record by ID
-  .patch(editAttendance); //edit a specific attendance record by ID
+  .delete(removeStudentAttendance) // get a specific attendance record by ID
+  .patch(ModifyAttendance); //edit a specific attendance record by ID
 
 export { attendanceRoutes }; // Export the router
 
-attendanceRoutes.route("/filter").get(filterAttendance);
+attendanceRoutes.route("/filter").post(getStudentsByCourseAndSemester);

@@ -160,9 +160,18 @@ const addAttendance = asyncHandler(async (req, res) => {
     );
 });
 
+const attendanceCount = asyncHandler(async (req, res) => {
+  const count = await Attendance.countDocuments();
+  if (!count) {
+    throw new ApiError(404, "No attendance found");
+  }
+  return res.status(200).json(new Apiresponse(200, count, "Count"));
+});
+
 export {
   getStudentsByCourseAndSemester,
   ModifyAttendance,
   removeStudentAttendance,
   addAttendance,
+  attendanceCount,
 };
