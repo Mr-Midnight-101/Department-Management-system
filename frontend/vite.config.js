@@ -7,7 +7,8 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
     proxy: {
-      "/api": "http://localhost:5000",
+      "/api":"https://department-management-system-w5vr.onrender.com/",
+      // "/api": "http://localhost:5000",
     },
   },
 });
