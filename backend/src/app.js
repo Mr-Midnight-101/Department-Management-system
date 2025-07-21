@@ -39,7 +39,8 @@ import { countDocuments } from "./routes/countDoc.js";
 
 // ⭐Block all routes that don't start with /website/api
 app.use((req, res, next) => {
-  if (!req.path.startsWith("/api")) {
+  const allowed = "Department"
+  if (!req.path.startsWith("/api") && !allowed.includes(req.path)  ) {
     return res.status(403).json({
       success: false,
       message: "Access denied. Only API routes are allowed.",

@@ -2,11 +2,20 @@ import mongoose from "mongoose";
 
 const AttendanceSchema = new mongoose.Schema(
   {
-    attendanceStudent: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Student",
-      required: true,
-    },
+    attendanceStudent: [
+      {
+        StudentId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Student",
+          required: true,
+        },
+        attendanceStatus: {
+          type: String,
+          enum: ["Present", "Absent", "Late", "Excused"],
+          default: "Absent",
+        },
+      },
+    ],
     attendanceRecordedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Teacher",
@@ -15,6 +24,11 @@ const AttendanceSchema = new mongoose.Schema(
     attendanceCourse: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Course",
+      required: true,
+    },
+    attendanceSubject: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Subject",
       required: true,
     },
     attendanceSemester: {
@@ -31,16 +45,11 @@ const AttendanceSchema = new mongoose.Schema(
         "Eighth",
       ],
     },
-    attendanceStatus: {
-      type: String,
-      enum: ["Present", "Absent", "Late", "Excused"],
+
+    attendanceDate: {
+      type: Date,
       required: true,
-      default: "Absent",
     },
-    attendanceDate:{
-      type:Date,
-      required:true,
-    }
   },
   {
     timestamps: true,
