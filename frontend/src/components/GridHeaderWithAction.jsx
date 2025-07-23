@@ -1,69 +1,63 @@
-import { Box, Typography, IconButton, useTheme } from "@mui/material";
+import { Box, Typography, IconButton, useTheme, Button } from "@mui/material";
 import { AddIcon } from "../utils/icons.js";
 import { getColorTokens } from "../theme/theme.js";
+import PageHeading from "./PageHeading.jsx";
+import GlassEffect from "./GlassEffect.jsx";
 const GridHeaderWithAction = ({
   pageTitle,
   buttonLabel,
   onButtonClick,
-  sx = {},
   buttonSx = {},
 }) => {
   const colors = getColorTokens(useTheme().palette.mode);
   return (
     <Box
-      display="flex"
-      justifyContent="space-between"
       sx={{
-        gap: 1,
-        my: 4,
-        mr: 0,
-        mt: 6,
-        alignItems: { xs: "flex-start", sm: "center" },
-        flexDirection: { xs: "column", sm: "row" },
-        ...sx,
+        display: "flex",
+        flexDirection: "column",
       }}
     >
-      <Typography
-        sx={{
-          fontSize: { xs: "1.6rem", sm: "2rem" },
-          color: colors.text[100],
-        }}
-      >
-        {pageTitle}
-      </Typography>
-      <Box
-        sx={{
-          "& :hover": { background: colors.gradient[100] },
-        }}
-      >
+      <PageHeading>{pageTitle}</PageHeading>
+      <Box>
         {onButtonClick && (
-          <IconButton
+          <Button
             onClick={onButtonClick}
             sx={{
               color: colors.text[100],
-              background: colors.gradient[100],
+               background: colors.gradient[100],
               "& :hover": {
                 background: "transparent",
               },
-              gap: 1,
               display: "flex",
               alignItems: "center",
-              borderRadius: 1,
+              borderRadius: "4px",
               ...buttonSx,
+              m: 0,
+              p: 0,
             }}
           >
-            <AddIcon color="inherit" />
-            <Typography
-              variant="h5"
+            <GlassEffect
               sx={{
-                color: colors.text[100],
-                lineHeight: 1,
-                fontWeight: { xs: 200, sm: 400 },
+                width: "100%",
+                height: "100%",
+                borderRadius: "4px",
+                m: 0,
               }}
             >
-              {buttonLabel}
-            </Typography>
-          </IconButton>
+              {/* <AddIcon color="inherit" /> */}
+              <Typography
+                variant="h5"
+                sx={{
+                  color: colors.text[100],
+                  // lineHeight: 1,
+                  fontWeight: 500,
+                  letterSpacing: 1,
+                }}
+              >
+                {buttonLabel}
+              </Typography>
+            </GlassEffect>
+          </Button>
         )}
       </Box>
     </Box>

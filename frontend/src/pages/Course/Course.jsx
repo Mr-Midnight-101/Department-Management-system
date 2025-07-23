@@ -247,9 +247,9 @@ const Course = () => {
     <Box width="100%">
       <PageSectionWrapper>
         <GridHeaderWithAction
-          pageTitle={"Course Records"}
+          pageTitle={"Academic Course Management"}
           onButtonClick={openRegisterDialog}
-          buttonLabel={"Add Course"}
+          buttonLabel={" Add New Course"}
         />
         <GridWrapper
           isDatafetched={isDataFetched}
