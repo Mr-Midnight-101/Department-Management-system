@@ -227,7 +227,6 @@ const Course = () => {
         headerAlign: "center",
         align: "center",
         minWidth: 140,
-        maxWidth: 180,
         renderCell: (params) => {
           const selectedRow = params.row;
           return (

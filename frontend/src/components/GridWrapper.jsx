@@ -26,8 +26,8 @@ const GridWrapper = ({ columns, rows, isDatafetched }) => {
       col?.headerName == "S.No."
         ? 60
         : col?.headerName == "Actions"
-        ? 160
-        : 100,
+        ? 300
+        : 120,
     headerAlign: "center",
   }));
 

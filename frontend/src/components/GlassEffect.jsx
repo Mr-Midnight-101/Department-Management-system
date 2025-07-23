@@ -9,7 +9,7 @@ const GlassEffect = ({ children, sx }) => {
         backdropFilter: "blur(8px)",
         borderRadius: 2,
         p: 2,
-        border: "1px solid rgba(255, 255, 255, 0.1)",
+        border: "1px solid rgba(70, 66, 66, 0.5)",
         ...sx,
       }}
     >

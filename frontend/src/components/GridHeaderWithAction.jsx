@@ -18,13 +18,20 @@ const GridHeaderWithAction = ({
       }}
     >
       <PageHeading>{pageTitle}</PageHeading>
-      <Box>
+      <Box
+        sx={{
+          justifyItems: {
+            xs: "center",
+            sm: "right",
+          },
+        }}
+      >
         {onButtonClick && (
           <Button
             onClick={onButtonClick}
             sx={{
               color: colors.text[100],
-               background: colors.gradient[100],
+              background: colors.gradient[100],
               "& :hover": {
                 background: "transparent",
               },
@@ -46,7 +53,7 @@ const GridHeaderWithAction = ({
             >
               {/* <AddIcon color="inherit" /> */}
               <Typography
-                variant="h5"
+                variant="h6"
                 sx={{
                   color: colors.text[100],
                   // lineHeight: 1,

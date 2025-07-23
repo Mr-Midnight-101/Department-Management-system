@@ -3,7 +3,7 @@ import React from "react";
 
 function PageHeading({ children }) {
   return (
-    <Box sx={{ justifyItems: "center", m: 4 }}>
+    <Box sx={{ justifyItems: "center", m: 2 }}>
       <Typography
         variant="h2"
         sx={{
