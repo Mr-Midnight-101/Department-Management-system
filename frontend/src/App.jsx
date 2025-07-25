@@ -18,7 +18,6 @@ import Register from "./pages/Register/Register.jsx";
 import UserProvider from "./pages/UserContext/UserContext.jsx";
 import UpdateUser from "./pages/UpdateUser/UpdateUser.jsx";
 import EmailVerification from "./pages/EmailVerification/EmailVerification.jsx";
-import StudentList from "./pages/Students/StudentList.jsx";
 
 function App() {
   const [theme, colorMode] = useThemeMode();
@@ -37,17 +36,17 @@ function App() {
               />
               <Route path="/" element={<Layout />}>
                 <Route index element={<Dashboard />} />
-                <Route path="/student" element={<StudentList />}>
-                  <Route path="Enrolled_students" element={<Students />} />
-                </Route>
-                <Route path="/course" element={<Course />} />
-                <Route path="/subject" element={<Subjects />} />
-                <Route path="/teacher" element={<Teachers />} />
-                <Route path="/attendance" element={<Attendance />} />
-                <Route path="/barchart" element={<BarChart />} />
-                <Route path="/piechart" element={<PieChart />} />
-                <Route path="/linechart" element={<LineChart />} />
-                <Route path="/UpdateUser" element={<UpdateUser />} />
+
+                {/* student page */}
+                <Route path="student" element={<Students />} />
+                <Route path="course" element={<Course />} />
+                <Route path="subject" element={<Subjects />} />
+                <Route path="teacher" element={<Teachers />} />
+                <Route path="attendance" element={<Attendance />} />
+                <Route path="barchart" element={<BarChart />} />
+                <Route path="piechart" element={<PieChart />} />
+                <Route path="linechart" element={<LineChart />} />
+                <Route path="UpdateUser" element={<UpdateUser />} />
               </Route>
             </Routes>
           </BrowserRouter>

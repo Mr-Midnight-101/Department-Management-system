@@ -14,22 +14,13 @@ const populateCourse = (query) => {
 
 // ⭐ Controller to add a new course
 const addCourse = asyncHandler(async (req, res) => {
-  const {
-    courseCode,
-    courseTitle,
-    courseDuration,
-    courseTerms,
-    courseCreditUnits,
-  } = req.body;
+  const { courseCode, courseTitle, courseDuration, courseCreditUnits } =
+    req.body;
 
   if (
-    [
-      courseCode,
-      courseTitle,
-      courseDuration,
-      courseTerms,
-      courseCreditUnits,
-    ].some((field) => field === undefined || field === null)
+    [courseCode, courseTitle, courseDuration, courseCreditUnits].some(
+      (field) => field === undefined || field === null
+    )
   ) {
     throw new ApiError(400, "All required fields must be provided.");
   }
@@ -63,7 +54,6 @@ const addCourse = asyncHandler(async (req, res) => {
     courseCode: courseCode.trim().toUpperCase(),
     courseTitle: courseTitle.trim(),
     courseDuration: courseDuration,
-    courseTerms,
     courseCreditUnits,
   });
 
@@ -124,19 +114,11 @@ const updateCourse = asyncHandler(async (req, res) => {
     courseCode,
     courseTitle,
     courseDuration,
-    courseTerms,
+
     courseCreditUnits,
   } = req.body;
 
-  if (
-    !(
-      courseCode ||
-      courseTitle ||
-      courseDuration ||
-      courseTerms ||
-      courseCreditUnits
-    )
-  ) {
+  if (!(courseCode || courseTitle || courseDuration || courseCreditUnits)) {
     throw new ApiError(400, "Please provide at least one field to update.");
   }
 
@@ -157,8 +139,7 @@ const updateCourse = asyncHandler(async (req, res) => {
         $set: {
           ...(courseCode && { courseCode: courseCode.trim().toUpperCase() }),
           ...(courseTitle && { courseTitle: courseTitle.trim() }),
-          ...(courseDuration && { courseDuration: courseDuration.trim() }),
-          ...(courseTerms && { courseTerms }),
+          ...(courseDuration && { courseDuration: courseDuration }),
           ...(courseCreditUnits !== undefined && { courseCreditUnits }),
         },
       },
@@ -205,7 +186,7 @@ const courseCount = asyncHandler(async (req, res) => {
 
 // ⭐ course list
 const courseList = asyncHandler(async (req, res) => {
-  const courses = await Course.find().select("courseCode");
+  const courses = await Course.find();
 
   if (!courses || courses.length === 0) {
     throw ApiError(404, "No courses found");

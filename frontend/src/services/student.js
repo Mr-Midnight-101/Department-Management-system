@@ -35,7 +35,7 @@ export const studentRegister = async (registerData) => {
     studentCurrentCourseId: registerData?.studentCurrentCourseId,
     studentType: registerData?.studentType,
     studentAdmissionYear: registerData?.studentAdmissionYear,
-    StudentCurrentSemester: registerData?.StudentCurrentSemester,
+    studentCurrentSemester: registerData?.studentCurrentSemester,
   };
 
   console.log("student just before api call", student);
@@ -65,7 +65,7 @@ export const updateStudentDetails = async (updateData) => {
     studentCurrentCourseId: updateData?.studentCurrentCourseId,
     studentType: updateData?.studentType,
     studentAdmissionYear: updateData?.studentAdmissionYear,
-    StudentCurrentSemester: updateData?.StudentCurrentSemester,
+    studentCurrentSemester: updateData?.studentCurrentSemester,
   };
   const { _id, ...data } = student;
   return await axios
@@ -76,6 +76,8 @@ export const updateStudentDetails = async (updateData) => {
 };
 
 export const deleteStudent = async (student) => {
+  console.log("api", student);
+
   const { _id } = student;
   return await axios
     .delete(`/api/student/${_id}`, {
@@ -84,16 +86,18 @@ export const deleteStudent = async (student) => {
     .then((res) => res.data);
 };
 
-export const filterStudentByCourse = async (filter) => {
-  console.log("front services", filter?.courseName);
+export const filterStudent = async (filter = {}) => {
+  const payload = {};
 
-  const studentData = {
-    courseName: filter?.courseName,
-  };
-  if (filter?.semester) {
-    studentData.semester = filter?.semester;
+  if (filter?.studentCurrentCourseId) {
+    payload.studentCurrentCourseId = filter.studentCurrentCourseId;
   }
-  return await axios.post("/api/student/filter", studentData, {
+
+  if (filter?.studentCurrentSemester) {
+    payload.studentCurrentSemester = filter.studentCurrentSemester;
+  }
+
+  return await axios.post("/api/student/filter", payload, {
     withCredentials: true,
   });
 };

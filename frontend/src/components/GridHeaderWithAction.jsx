@@ -49,6 +49,8 @@ const GridHeaderWithAction = ({
                 height: "100%",
                 borderRadius: "4px",
                 m: 0,
+                px: 2,
+                py:1
               }}
             >
               {/* <AddIcon color="inherit" /> */}

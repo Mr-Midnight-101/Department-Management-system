@@ -6,14 +6,14 @@ import {
   updateStudent,
   studentCount,
   deleteStudent,
-  studentbyCourseAndSemester,
+  filterStudents,
 } from "../controllers/student.controller.js";
 
 const studentRoutes = Router();
 
 studentRoutes.route("/count").get(studentCount);
 studentRoutes.route("/").post(addStudent).get(getAllStudents);
-studentRoutes.route("/filter").post(studentbyCourseAndSemester)
+studentRoutes.route("/filter").post(filterStudents);
 studentRoutes
   .route("/:id")
   .get(getStudentById)

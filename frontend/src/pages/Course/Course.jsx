@@ -27,9 +27,9 @@ import FormDialogWrapper from "../../components/FormDialogWrapper.jsx";
 import FormFieldsStack from "../../components/FormFieldsStack.jsx";
 import DeleteConfirmationDialogContent from "../../components/DeleteConfirmationDialogContent.jsx";
 import GridActionButton from "../../components/GridActionButton.jsx";
-import { durationoptions, semesterOptions } from "./menuList.js";
 import courseValidator from "./courseValidator.js";
 import { useNavigate } from "react-router-dom";
+import { durationoptions, Options } from "./menuList.js";
 // Example dropdown options (customize as needed)
 
 const Course = () => {
@@ -69,7 +69,7 @@ const Course = () => {
   // Register dialog state
   const [isRegisterDialogOpen, setRegisterDialogOpen] = useState(false);
   const [registerForm, setRegisterForm] = useState({});
-  const [registerError, setRegisterError] = useState(undefined);
+  const [registerError, setRegisterError] = useState("");
   const [validationError, setValidationError] = useState("");
   const [registerLoading, setRegisterLoading] = useState(false);
 
@@ -132,9 +132,9 @@ const Course = () => {
       console.log(response);
       if (!response || response.status !== 201) {
         setRegisterLoading(false);
+        closeRegisterDialog();
         return;
       }
-      closeRegisterDialog();
     } catch (error) {
       console.log(error);
       setValidationError(
@@ -308,7 +308,7 @@ const Course = () => {
                   />
                   <TextField
                     size="small"
-                    label="Course Duration (YYYY-YYYY)"
+                    label="Course Duration"
                     required
                     select
                     error={!!registerError?.courseDurationError}
@@ -355,13 +355,6 @@ const Course = () => {
                 alignItems="center"
                 flexDirection="column"
               >
-                {validationError && (
-                  <Box>
-                    <Typography variant="h6" color="error">
-                      {validationError}
-                    </Typography>
-                  </Box>
-                )}
                 <DialogActions
                   sx={{
                     "& :hover": {
@@ -434,7 +427,7 @@ const Course = () => {
                 />
                 <TextField
                   size="small"
-                  label="Course Duration (YYYY-YYYY)"
+                  label="Course Duration "
                   name="courseDuration"
                   select
                   error={!!updateError?.courseDurationError}
@@ -449,27 +442,6 @@ const Course = () => {
                 >
                   {durationoptions.map((item) => (
                     <MenuItem value={item.value} key={item.value}>
-                      {item.label}
-                    </MenuItem>
-                  ))}
-                </TextField>
-                <TextField
-                  label="Terms"
-                  size="small"
-                  name="courseTerms"
-                  select
-                  error={!!updateError?.courseTermError}
-                  helperText={updateError?.courseTermError}
-                  value={selectedCourse?.courseTerms || ""}
-                  onChange={(e) =>
-                    setSelectedCourse((prev) => ({
-                      ...prev,
-                      [e.target.name]: e.target.value,
-                    }))
-                  }
-                >
-                  {semesterOptions.map((item) => (
-                    <MenuItem key={item.value} value={item.value}>
                       {item.label}
                     </MenuItem>
                   ))}
@@ -493,13 +465,6 @@ const Course = () => {
               </FormFieldsStack>
             </DialogContent>
             {/* Update Validation Error */}
-            {validationError && (
-              <Box>
-                <Typography variant="h6" color="error">
-                  {validationError}
-                </Typography>
-              </Box>
-            )}
             <DialogActions
               sx={{
                 display: "flex",
@@ -547,10 +512,25 @@ const Course = () => {
 
       {/* withoutlogin */}
       {isFetchError && (
-        <Snackbar open={!!isFetchError} autoHideDuration={6000}>
+        <Snackbar
+          open={!!isFetchError}
+          onClose={() => setFetchError("")}
+          autoHideDuration={2000}
+        >
           <Alert variant="filled" severity="error">
             {isFetchError}
             {"\n Redirecting to login...."}
+          </Alert>
+        </Snackbar>
+      )}
+      {validationError && (
+        <Snackbar
+          open={!!validationError}
+          onClose={() => setValidationError("")}
+          autoHideDuration={2000}
+        >
+          <Alert variant="filled" severity="error">
+            {validationError}
           </Alert>
         </Snackbar>
       )}

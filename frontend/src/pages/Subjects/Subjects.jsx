@@ -25,8 +25,11 @@ import {
   deleteSubject,
 } from "../../services/subject.js";
 import { subjectValidation } from "./subjectValidation.js";
+import { useLocation } from "react-router-dom";
 
 const Subjects = () => {
+
+
   const theme = useTheme();
   const colors = getColorTokens(theme.palette.mode);
 
@@ -526,7 +529,7 @@ const Subjects = () => {
       <Box>
         {isDeleteDialogOpen && selectedSubject && (
           <FormDialogWrapper
-            sx={{  height: "46vh", }}
+            sx={{ height: "46vh" }}
             isDialogOpen={isDeleteDialogOpen}
             closeDialog={closeDeleteDialog}
             dialogHeading={"Remove Subject"}

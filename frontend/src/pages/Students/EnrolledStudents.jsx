@@ -17,7 +17,6 @@ import {
   useTheme,
   Snackbar,
   Alert,
-  IconButton,
 } from "@mui/material";
 
 // Validation function (can be reused for both register and update)
@@ -63,10 +62,12 @@ const Students = () => {
   const fetchCourseList = useCallback(async () => {
     try {
       const res = await courseList().then((data) => data?.data?.data);
+      console.log(res);
       setCourseChoices(res);
       setCourseArray(res);
       setCourseError("");
     } catch (error) {
+      console.log(error);
       setCourseFetchError(error?.response?.data?.message);
     }
   }, []);
@@ -82,7 +83,7 @@ const Students = () => {
 
   // ⭐ Fetch students
 
-  const [isfetchError, setIsFetchError] = useState(""); // Changed to null or object, not string
+  const [isfetchError, setIsFetchError] = useState(null); // Changed to null or object, not string
   const [students, setStudents] = useState([]);
   const fetchStudents = useCallback(
     async (filterData) => {
@@ -91,7 +92,6 @@ const Students = () => {
         const data = await filterStudent(filterData).then(
           (res) => res?.data?.data
         );
-
         const mappedRows = data.map((student, i) => ({
           ...student,
           id: student._id || i, // Ensure a unique ID for DataGrid
@@ -103,13 +103,21 @@ const Students = () => {
           postalCode: student.studentAddress?.postalCode || "",
         }));
         setStudents(mappedRows);
-        setIsFetchError(""); // Clear any previous fetch errors
+        setIsFetchError(null); // Clear any previous fetch errors
       } catch (error) {
-        setIsFetchError(error?.response?.data?.message); // Store the full error object for potential debugging
+        console.error("Error fetching students:", error);
+        setIsFetchError(error); // Store the full error object for potential debugging
       }
     },
     [] // No dependency on students, so it doesn't re-create unnecessarily
   );
+
+  useEffect(() => {
+    // Only fetch students if a course is pre-selected, or if you want to fetch all students on initial load
+    if (filterData) {
+      fetchStudents(filterData);
+    }
+  }, [fetchStudents, filterData, refreshTable]); // Re-fetch when courseObj changes or table needs refresh
 
   // Register Dialog open/close handlers
   const openRegisterDialog = () => {
@@ -121,7 +129,6 @@ const Students = () => {
   };
   const closeRegisterDialog = () => {
     setRegisterDialogOpen(false);
-    setRegisterLoading(false);
     setRegisterError({}); // Clear errors on close
     setRefreshTable((prev) => !prev); // Trigger table refresh
   };
@@ -132,10 +139,10 @@ const Students = () => {
   const [selectedStudent, setSelectedStudent] = useState(null); // Changed to null initially
 
   // delete Dialog open/close handlers
-  const openDeleteDialog = (student) => {
+  const openDeleteDialog = useCallback((student) => {
     setSelectedStudent(student);
     setDeleteDialogOpen(true);
-  };
+  }, []);
   const closeDeleteDialog = useCallback(() => {
     setSelectedStudent(null); // Clear selected student on close
     setDeleteDialogOpen(false);
@@ -153,13 +160,12 @@ const Students = () => {
   // Error and loading state for registration
   const [registerError, setRegisterError] = useState({}); // Stores validation errors as an object
   const [registerLoading, setRegisterLoading] = useState(false);
-  const [isRegisterApiError, setRegisterApiError] = useState("");
+
   // Register Handler
   const handleRegisterStudent = async (formData) => {
-    console.log(formData);
-
     setRegisterError({}); // Clear previous validation errors
     setRegisterLoading(true);
+
     const validationMsg = validateStudentForm(formData);
     if (validationMsg && Object.keys(validationMsg).length > 0) {
       setRegisterError(validationMsg);
@@ -168,14 +174,20 @@ const Students = () => {
     }
 
     try {
+      console.log("passing data in api after validation", formData);
       const response = await studentRegister(formData);
-      console.log("student Form daata in handler", formData);
-
       if (response.status === 201) {
         closeRegisterDialog(); // Close and trigger refresh
       }
     } catch (error) {
-      setRegisterApiError(error?.response?.data?.message);
+      console.error("Registration error:", error);
+      setRegisterError((prev) => ({
+        ...prev,
+        apiError:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Student registration failed. Please try again.",
+      }));
     } finally {
       setRegisterLoading(false);
     }
@@ -188,23 +200,23 @@ const Students = () => {
   const [updateLoading, setUpdateLoading] = useState(false);
 
   // update Dialog open/close handlers
-  const openUpdateDialog = (student) => {
+  const openUpdateDialog = useMemo((student) => {
     // Map existing student data to match form structure, especially for course ID
     setSelectedStudent({
       ...student,
       // Ensure studentCurrentCourseId is just the ID string for the select input
       studentCurrentCourseId: student?.studentCurrentCourseId?._id || "",
       // Ensure studentAddress exists for nested updates
-      studentAddress: {
-        city: student.studentAddress?.city || "",
-        state: student.studentAddress?.state || "",
-        country: student.studentAddress?.country || "India", // Default country if missing
-        postalCode: student.studentAddress?.postalCode || "",
-      },
+      // studentAddress: {
+      //   city: student.studentAddress?.city || "",
+      //   state: student.studentAddress?.state || "",
+      //   country: student.studentAddress?.country || "India", // Default country if missing
+      //   postalCode: student.studentAddress?.postalCode || "",
+      // },
     });
     setUpdateError({}); // Clear validation errors
     setUpdateDialogOpen(true);
-  };
+  }, []);
 
   const closeUpdateDialog = () => {
     setSelectedStudent(null);
@@ -226,9 +238,9 @@ const Students = () => {
 
     try {
       const updated = await updateStudentDetails(student);
-      console.log("updated", updated);
+      console.log("Response of API call:", updated);
 
-      if (updated.statusCode === 200) {
+      if (updated.status === 200) {
         // Assuming 200 OK for updates
         closeUpdateDialog(); // Close and trigger refresh
       }
@@ -248,8 +260,6 @@ const Students = () => {
 
   // Delete Handler
   const handleDeleteStudent = useCallback(async () => {
-    console.log("handleDeleteStudent", selectedStudent);
-
     if (!selectedStudent || !selectedStudent._id) {
       console.error("No student selected for deletion.");
       return;
@@ -287,6 +297,7 @@ const Students = () => {
         headerAlign: "center",
         align: "left",
         valueFormatter: (params) => {
+          console.log(params);
           // Format date for display if it's not already
           return params.value
             ? dayjs(params.value).format("YYYY-MM-DD")
@@ -312,6 +323,7 @@ const Students = () => {
         align: "left",
         // Use valueGetter to display courseCode from the nested object
         valueGetter: (params) => {
+          console.log(params);
           if (params === null) {
             return "N/A";
           } else {
@@ -369,12 +381,9 @@ const Students = () => {
         headerAlign: "center",
         align: "center",
         renderCell: (params) => {
-          const row = params.row;
-          console.log("e from render cell", row);
-          // Use params.row for the specific row data
+          const row = params.row; // Use params.row for the specific row data
           return (
             <GridActionButton
-              selectedRow={row}
               openUpdateDialog={() => openUpdateDialog(row)}
               openDeleteDialog={() => openDeleteDialog(row)}
             />
@@ -382,7 +391,7 @@ const Students = () => {
         },
       },
     ],
-    [] // Add action handlers as dependencies
+    [openUpdateDialog, openDeleteDialog] // Add action handlers as dependencies
   );
 
   return (
@@ -416,10 +425,10 @@ const Students = () => {
               const selectedCourse = courseArray.find(
                 (course) => course._id === selectedId
               );
+
               setFilterData({
                 ...filterData,
                 studentCurrentCourseId: selectedId,
-                studentCurrentSemester: "",
               });
               setCourseChoice(selectedCourse); // for semester mapping
             }}
@@ -450,49 +459,6 @@ const Students = () => {
               </MenuItem>
             ))}
           </TextField>
-          <Button
-            onClick={() => {
-              fetchStudents(filterData);
-            }}
-            sx={{
-              display: "flex",
-              gap: 1,
-              border: `1px solid ${colors.grey[700]}`,
-              px: 2,
-              alignItems: "center",
-            }}
-          >
-            <SearchIcon sx={{ color: colors.grey[700] }} />
-            <Typography
-              color={colors.text[100]}
-              sx={{
-                textTransform: "capitalize",
-              }}
-            >
-              {" "}
-              {"Search"}
-            </Typography>
-          </Button>
-          <Button
-            onClick={() => setFilterData({})}
-            sx={{
-              display: "flex",
-              gap: 1,
-              border: `1px solid ${colors.grey[700]}`,
-              px: 2,
-              alignItems: "center",
-            }}
-          >
-            <Typography
-              color={colors.text[100]}
-              sx={{
-                textTransform: "capitalize",
-              }}
-            >
-              {" "}
-              {"Clear"}
-            </Typography>
-          </Button>
         </Box>
 
         {/* DataGrid */}
@@ -502,7 +468,12 @@ const Students = () => {
           }}
           rows={students}
           columns={columns}
-          isDatafetched={!isfetchError}
+          // Display fetch error if any
+          fetchError={
+            isfetchError
+              ? isfetchError.message || "Failed to fetch student data."
+              : null
+          }
         />
       </PageSectionWrapper>
 
@@ -517,13 +488,30 @@ const Students = () => {
             dialogHeading={"Register Student"}
           >
             <DialogContent>
+              {/* Overall Error message (e.g., from server) */}
+              {registerError?.apiError && (
+                <Box mb={2}>
+                  <Typography color="error" variant="body2">
+                    {registerError.apiError}
+                  </Typography>
+                </Box>
+              )}
+              {/* Overall Validation Error from frontend */}
+              {registerError?.allFields && (
+                <Box mb={2}>
+                  <Typography color="error" variant="body2">
+                    {registerError.allFields}
+                  </Typography>
+                </Box>
+              )}
+
               <FormFieldsStack>
                 <TextField
                   size="small"
                   label="Full Name"
                   required
-                  error={!!registerError?.nameError}
-                  helperText={registerError?.nameError}
+                  error={!!registerError?.studentFullName}
+                  helperText={registerError?.studentFullName}
                   variant="outlined"
                   name="studentFullName"
                   value={registerForm?.studentFullName || ""}
@@ -539,28 +527,33 @@ const Students = () => {
                   label="Date of birth"
                   type="date"
                   required
-                  error={!!registerError?.dobError}
-                  helperText={registerError?.dobError}
+                  error={!!registerError?.studentDateOfBirth}
+                  helperText={registerError?.studentDateOfBirth}
                   variant="outlined"
                   InputLabelProps={{
                     shrink: true,
                   }}
                   name="studentDateOfBirth"
-                  value={registerForm?.studentDateOfBirth}
-                  onChange={(e) => {
+                  value={
+                    registerForm.studentDateOfBirth
+                      ? dayjs(registerForm.studentDateOfBirth).format(
+                          "YYYY-MM-DD"
+                        )
+                      : ""
+                  }
+                  onChange={(e) =>
                     setRegisterForm({
                       ...registerForm,
                       [e.target.name]: e.target.value,
-                    });
-                    console.log(e.target.value);
-                  }}
+                    })
+                  }
                 />
                 <TextField
                   size="small"
                   label="Enrollment No."
                   required
-                  error={!!registerError?.enrollError}
-                  helperText={registerError?.enrollError}
+                  error={!!registerError?.studentEnrollmentNumber}
+                  helperText={registerError?.studentEnrollmentNumber}
                   variant="outlined"
                   name="studentEnrollmentNumber"
                   value={registerForm.studentEnrollmentNumber || ""}
@@ -576,9 +569,9 @@ const Students = () => {
                   label="Course"
                   required
                   select
-                  error={!!registerError?.courseError}
+                  error={!!registerError?.studentCurrentCourseId}
                   helperText={
-                    registerError?.courseError ||
+                    registerError?.studentCurrentCourseId ||
                     (courseChoices.length === 0 && !courseError
                       ? "No courses available"
                       : "")
@@ -587,23 +580,17 @@ const Students = () => {
                   name="studentCurrentCourseId"
                   value={registerForm?.studentCurrentCourseId || ""}
                   onChange={(e) => {
-                    const selectedId = e.target.value;
-                    const selectedCourse = courseArray.find(
-                      (course) => course._id === selectedId
-                    );
-                    setRegisterForm({
-                      ...registerForm,
-                      studentCurrentCourseId: selectedId,
-                      studentCurrentSemester: "",
-                    });
-                    setCourseChoice(selectedCourse);
+                    setRegisterForm((prev) => ({
+                      ...prev,
+                      studentCurrentCourseId: e.target.value,
+                    }));
                   }}
                   disabled={courseChoices.length === 0}
                 >
-                  {courseArray.length > 0 ? (
-                    courseArray.map((course) => (
-                      <MenuItem key={course._id} value={course._id}>
-                        <Typography>{course.courseCode}</Typography>
+                  {courseChoices.length > 0 ? (
+                    courseChoices.map((c) => (
+                      <MenuItem key={c?._id} value={c?._id}>
+                        {c?.courseCode}
                       </MenuItem>
                     ))
                   ) : (
@@ -616,32 +603,30 @@ const Students = () => {
                   label="Semester"
                   size="small"
                   select
-                  name="studentCurrentSemester"
+                  name="StudentCurrentSemester"
                   variant="outlined"
-                  value={registerForm?.studentCurrentSemester || ""}
+                  value={registerForm?.StudentCurrentSemester || ""}
                   onChange={(e) => {
-                    setRegisterForm({
-                      ...registerForm,
-                      studentCurrentSemester: e.target.value,
-                    });
+                    setRegisterForm((prev) => ({
+                      ...prev,
+                      StudentCurrentSemester: e.target.value,
+                    }));
                   }}
-                  error={!!registerError?.semError}
-                  helperText={registerError?.semError}
+                  error={!!registerError?.StudentCurrentSemester}
+                  helperText={registerError?.StudentCurrentSemester}
                 >
-                  {semesterArray.map((sem) => {
-                    return (
-                      <MenuItem key={sem} value={sem}>
-                        <Typography>{sem}</Typography>
-                      </MenuItem>
-                    );
-                  })}
+                  {semesterList.map((item, idx) => (
+                    <MenuItem key={item.value || idx} value={item.value}>
+                      {item.value}
+                    </MenuItem>
+                  ))}
                 </TextField>
                 <TextField
                   size="small"
                   label="Roll No."
                   required
-                  error={!!registerError?.rollError}
-                  helperText={registerError?.rollError}
+                  error={!!registerError?.studentRollNumber}
+                  helperText={registerError?.studentRollNumber}
                   variant="outlined"
                   name="studentRollNumber"
                   value={registerForm.studentRollNumber || ""}
@@ -657,8 +642,8 @@ const Students = () => {
                   type="email"
                   label="Email ID"
                   required
-                  error={!!registerError?.emailError}
-                  helperText={registerError?.emailError}
+                  error={!!registerError?.studentEmail}
+                  helperText={registerError?.studentEmail}
                   variant="outlined"
                   name="studentEmail"
                   value={registerForm.studentEmail || ""}
@@ -673,8 +658,8 @@ const Students = () => {
                   size="small"
                   label="Contact"
                   required
-                  error={!!registerError?.contactError}
-                  helperText={registerError?.contactError}
+                  error={!!registerError?.studentContactNumber}
+                  helperText={registerError?.studentContactNumber}
                   variant="outlined"
                   name="studentContactNumber"
                   value={registerForm.studentContactNumber || ""}
@@ -688,8 +673,8 @@ const Students = () => {
                 <TextField
                   size="small"
                   label="Father's Name"
-                  error={!!registerError?.fnameError}
-                  helperText={registerError?.fnameError}
+                  error={!!registerError?.studentFatherName}
+                  helperText={registerError?.studentFatherName}
                   required
                   variant="outlined"
                   name="studentFatherName"
@@ -706,8 +691,8 @@ const Students = () => {
                   label="City"
                   required
                   variant="outlined"
-                  error={!!registerError?.cityError}
-                  helperText={registerError?.cityError}
+                  error={!!registerError?.city}
+                  helperText={registerError?.city}
                   name="city"
                   value={registerForm?.studentAddress?.city || ""}
                   onChange={(e) =>
@@ -724,8 +709,8 @@ const Students = () => {
                   size="small"
                   label="State"
                   required
-                  error={!!registerError?.stateError}
-                  helperText={registerError?.stateError}
+                  error={!!registerError?.state}
+                  helperText={registerError?.state}
                   variant="outlined"
                   name="state"
                   value={registerForm?.studentAddress?.state || ""}
@@ -744,8 +729,8 @@ const Students = () => {
                   label="Country"
                   required
                   variant="outlined"
-                  error={!!registerError?.countryError}
-                  helperText={registerError?.countryError}
+                  error={!!registerError?.country}
+                  helperText={registerError?.country}
                   name="country"
                   value={registerForm?.studentAddress?.country || ""}
                   onChange={(e) =>
@@ -764,8 +749,8 @@ const Students = () => {
                   label="Postal Code"
                   variant="outlined"
                   value={registerForm?.studentAddress?.postalCode || ""}
-                  error={!!registerError?.postalCodeError}
-                  helperText={registerError?.postalCodeError}
+                  error={!!registerError?.postalCode}
+                  helperText={registerError?.postalCode}
                   name="postalCode"
                   onChange={(e) =>
                     setRegisterForm({
@@ -783,8 +768,8 @@ const Students = () => {
                   required
                   select
                   variant="outlined"
-                  error={!!registerError?.categoryErro}
-                  helperText={registerError?.categoryErro}
+                  error={!!registerError?.studentCategory}
+                  helperText={registerError?.studentCategory}
                   name="studentCategory"
                   value={registerForm.studentCategory || ""}
                   onChange={(e) =>
@@ -805,8 +790,8 @@ const Students = () => {
                   size="small"
                   label="Student Type"
                   required
-                  error={!!registerError?.studentTypeError}
-                  helperText={registerError?.studentTypeError}
+                  error={!!registerError?.studentType}
+                  helperText={registerError?.studentType}
                   select
                   variant="outlined"
                   name="studentType"
@@ -829,8 +814,8 @@ const Students = () => {
                   type="number"
                   label="Admission Year"
                   required
-                  error={!!registerError?.admissionYearError}
-                  helperText={registerError?.admissionYearError}
+                  error={!!registerError?.studentAdmissionYear}
+                  helperText={registerError?.studentAdmissionYear}
                   variant="outlined"
                   name="studentAdmissionYear"
                   value={registerForm.studentAdmissionYear || ""}
@@ -878,95 +863,101 @@ const Students = () => {
             dialogHeading={"Update student"}
           >
             <DialogContent>
+              {/* Overall Error message (e.g., from server) */}
+              {updateError?.apiError && (
+                <Box mb={2}>
+                  <Typography color="error" variant="body2">
+                    {updateError.apiError}
+                  </Typography>
+                </Box>
+              )}
+              {/* Overall Validation Error from frontend */}
+              {updateError?.allFields && (
+                <Box mb={2}>
+                  <Typography color="error" variant="body2">
+                    {updateError.allFields}
+                  </Typography>
+                </Box>
+              )}
               <FormFieldsStack>
                 <TextField
                   size="small"
                   label="Full Name"
-                  required
-                  error={!!updateError?.nameError}
-                  helperText={updateError?.nameError}
-                  variant="outlined"
                   name="studentFullName"
                   value={selectedStudent?.studentFullName || ""}
                   onChange={(e) =>
-                    setSelectedStudent({
-                      ...selectedStudent,
+                    setSelectedStudent((prev) => ({
+                      ...prev,
                       [e.target.name]: e.target.value,
-                    })
+                    }))
                   }
+                  error={!!updateError?.studentFullName}
+                  helperText={updateError?.studentFullName}
                 />
                 <TextField
                   size="small"
-                  label="Date of birth"
-                  type="date"
-                  required
-                  error={!!updateError?.dobError}
-                  helperText={updateError?.dobError}
-                  variant="outlined"
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
+                  type="date" // Changed type to date
+                  label="DOB"
                   name="studentDateOfBirth"
-                  value={selectedStudent?.studentDateOfBirth}
-                  onChange={(e) => {
-                    setSelectedStudent({
-                      ...selectedStudent,
+                  InputLabelProps={{ shrink: true }}
+                  value={
+                    selectedStudent?.studentDateOfBirth
+                      ? dayjs(selectedStudent.studentDateOfBirth).format(
+                          "YYYY-MM-DD"
+                        )
+                      : ""
+                  }
+                  onChange={(e) =>
+                    setSelectedStudent((prev) => ({
+                      ...prev,
+                      // Ensure date is stored correctly if your backend expects Date object or specific format
                       [e.target.name]: e.target.value,
-                    });
-                    console.log(e.target.value);
-                  }}
+                    }))
+                  }
+                  error={!!updateError?.studentDateOfBirth}
+                  helperText={updateError?.studentDateOfBirth}
                 />
                 <TextField
                   size="small"
-                  label="Enrollment No."
-                  required
-                  error={!!updateError?.enrollError}
-                  helperText={updateError?.enrollError}
-                  variant="outlined"
+                  label="Enrollment"
                   name="studentEnrollmentNumber"
-                  value={selectedStudent.studentEnrollmentNumber || ""}
+                  value={selectedStudent?.studentEnrollmentNumber || ""}
                   onChange={(e) =>
-                    setSelectedStudent({
-                      ...selectedStudent,
+                    setSelectedStudent((prev) => ({
+                      ...prev,
                       [e.target.name]: e.target.value,
-                    })
+                    }))
                   }
+                  error={!!updateError?.studentEnrollmentNumber}
+                  helperText={updateError?.studentEnrollmentNumber}
                 />
                 <TextField
                   size="small"
                   label="Course"
                   required
                   select
-                  error={!!updateError?.courseError}
+                  error={!!updateError?.studentCurrentCourseId}
                   helperText={
-                    updateError?.courseError ||
-                    (courseArray.length === 0 && !courseError
+                    updateError?.studentCurrentCourseId ||
+                    (courseChoices.length === 0 && !courseError
                       ? "No courses available"
                       : "")
                   }
                   variant="outlined"
                   name="studentCurrentCourseId"
+                  disabled={courseChoices.length === 0}
                   value={selectedStudent?.studentCurrentCourseId || ""}
                   onChange={(e) => {
-                    console.log("event", e);
-
-                    const selectedId = e.target.value;
-                    const selectedCourse = courseArray.find(
-                      (course) => course._id === selectedId
-                    );
-                    setSelectedStudent({
-                      ...selectedStudent,
-                      studentCurrentCourseId: selectedId,
-                      studentCurrentSemester: "",
-                    });
-                    setCourseChoice(selectedCourse);
+                    setSelectedStudent((prev) => ({
+                      ...prev,
+                      studentCurrentCourseId: e.target.value,
+                    }));
                   }}
-                  disabled={courseChoices.length === 0}
                 >
-                  {courseArray.length > 0 ? (
-                    courseArray.map((course) => (
-                      <MenuItem key={course._id} value={course._id}>
-                        <Typography>{course.courseCode}</Typography>
+                  {courseChoices.length > 0 ? (
+                    courseChoices.map((c, idx) => (
+                      <MenuItem key={c?._id || idx} value={c?._id}>
+                        {c?.courseCode}
                       </MenuItem>
                     ))
                   ) : (
@@ -979,146 +970,131 @@ const Students = () => {
                   label="Semester"
                   size="small"
                   select
-                  name="studentCurrentSemester"
                   variant="outlined"
-                  value={selectedStudent?.studentCurrentSemester || ""}
+                  name="StudentCurrentSemester"
+                  value={selectedStudent?.StudentCurrentSemester || ""}
                   onChange={(e) => {
-                    setSelectedStudent({
-                      ...selectedStudent,
-                      studentCurrentSemester: e.target.value,
-                    });
+                    setSelectedStudent((prev) => ({
+                      ...prev,
+                      [e.target.name]: e.target.value,
+                    }));
                   }}
-                  error={!!updateError?.semError}
-                  helperText={updateError?.semError}
+                  error={!!updateError?.StudentCurrentSemester}
+                  helperText={updateError?.StudentCurrentSemester}
                 >
-                  {semesterArray.map((sem) => {
-                    return (
-                      <MenuItem key={sem} value={sem}>
-                        <Typography>{sem}</Typography>
-                      </MenuItem>
-                    );
-                  })}
+                  {semesterList.map((item, idx) => (
+                    <MenuItem key={item.value || idx} value={item.value}>
+                      {item.value}
+                    </MenuItem>
+                  ))}
                 </TextField>
                 <TextField
+                  label="Roll no."
                   size="small"
-                  label="Roll No."
-                  required
-                  error={!!updateError?.rollError}
-                  helperText={updateError?.rollError}
-                  variant="outlined"
                   name="studentRollNumber"
-                  value={selectedStudent.studentRollNumber || ""}
+                  value={selectedStudent?.studentRollNumber || ""}
                   onChange={(e) =>
-                    setSelectedStudent({
-                      ...selectedStudent,
+                    setSelectedStudent((prev) => ({
+                      ...prev,
                       [e.target.name]: e.target.value,
-                    })
+                    }))
                   }
+                  error={!!updateError?.studentRollNumber}
+                  helperText={updateError?.studentRollNumber}
                 />
                 <TextField
+                  label="Email"
                   size="small"
-                  type="email"
-                  label="Email ID"
-                  required
-                  error={!!updateError?.emailError}
-                  helperText={updateError?.emailError}
-                  variant="outlined"
                   name="studentEmail"
-                  value={selectedStudent.studentEmail || ""}
+                  value={selectedStudent?.studentEmail || ""}
                   onChange={(e) =>
-                    setSelectedStudent({
-                      ...selectedStudent,
+                    setSelectedStudent((prev) => ({
+                      ...prev,
                       [e.target.name]: e.target.value,
-                    })
+                    }))
                   }
+                  error={!!updateError?.studentEmail}
+                  helperText={updateError?.studentEmail}
                 />
                 <TextField
+                  label="Contact Info"
                   size="small"
-                  label="Contact"
-                  required
-                  error={!!updateError?.contactError}
-                  helperText={updateError?.contactError}
-                  variant="outlined"
                   name="studentContactNumber"
-                  value={selectedStudent.studentContactNumber || ""}
+                  value={selectedStudent?.studentContactNumber || ""}
                   onChange={(e) =>
-                    setSelectedStudent({
-                      ...selectedStudent,
+                    setSelectedStudent((prev) => ({
+                      ...prev,
                       [e.target.name]: e.target.value,
-                    })
+                    }))
                   }
+                  error={!!updateError?.studentContactNumber}
+                  helperText={updateError?.studentContactNumber}
                 />
                 <TextField
+                  label="Father Name"
                   size="small"
-                  label="Father's Name"
-                  error={!!updateError?.fnameError}
-                  helperText={updateError?.fnameError}
-                  required
-                  variant="outlined"
                   name="studentFatherName"
-                  value={selectedStudent.studentFatherName || ""}
+                  value={selectedStudent?.studentFatherName || ""}
                   onChange={(e) =>
-                    setSelectedStudent({
-                      ...selectedStudent,
+                    setSelectedStudent((prev) => ({
+                      ...prev,
                       [e.target.name]: e.target.value,
-                    })
+                    }))
                   }
+                  error={!!updateError?.studentFatherName}
+                  helperText={updateError?.studentFatherName}
                 />
                 <TextField
-                  size="small"
                   label="City"
-                  required
-                  variant="outlined"
-                  error={!!updateError?.cityError}
-                  helperText={updateError?.cityError}
+                  size="small"
                   name="city"
                   value={selectedStudent?.studentAddress?.city || ""}
                   onChange={(e) =>
-                    setSelectedStudent({
-                      ...selectedStudent,
+                    setSelectedStudent((prev) => ({
+                      ...prev,
                       studentAddress: {
-                        ...selectedStudent.studentAddress,
+                        ...prev.studentAddress,
                         [e.target.name]: e.target.value,
                       },
-                    })
+                    }))
                   }
+                  error={!!updateError?.city}
+                  helperText={updateError?.city}
                 />
                 <TextField
-                  size="small"
                   label="State"
-                  required
-                  error={!!updateError?.stateError}
-                  helperText={updateError?.stateError}
-                  variant="outlined"
+                  size="small"
                   name="state"
                   value={selectedStudent?.studentAddress?.state || ""}
                   onChange={(e) =>
-                    setSelectedStudent({
-                      ...selectedStudent,
+                    setSelectedStudent((prev) => ({
+                      ...prev,
                       studentAddress: {
-                        ...selectedStudent.studentAddress,
+                        ...prev.studentAddress,
                         [e.target.name]: e.target.value,
                       },
-                    })
+                    }))
                   }
+                  error={!!updateError?.state}
+                  helperText={updateError?.state}
                 />
                 <TextField
                   size="small"
                   label="Country"
                   required
                   variant="outlined"
-                  error={!!updateError?.countryError}
-                  helperText={updateError?.countryError}
+                  error={!!updateError?.country}
+                  helperText={updateError?.country}
                   name="country"
                   value={selectedStudent?.studentAddress?.country || ""}
                   onChange={(e) =>
-                    setSelectedStudent({
-                      ...selectedStudent,
+                    setSelectedStudent((prev) => ({
+                      ...prev,
                       studentAddress: {
-                        ...selectedStudent.studentAddress,
+                        ...prev.studentAddress,
                         [e.target.name]: e.target.value || "India",
                       },
-                    })
+                    }))
                   }
                 />
                 <TextField
@@ -1127,17 +1103,17 @@ const Students = () => {
                   label="Postal Code"
                   variant="outlined"
                   value={selectedStudent?.studentAddress?.postalCode || ""}
-                  error={!!updateError?.postalCodeError}
-                  helperText={updateError?.postalCodeError}
+                  error={!!updateError?.postalCode}
+                  helperText={updateError?.postalCode}
                   name="postalCode"
                   onChange={(e) =>
-                    setSelectedStudent({
-                      ...selectedStudent,
+                    setSelectedStudent((prev) => ({
+                      ...prev,
                       studentAddress: {
-                        ...selectedStudent.studentAddress,
+                        ...prev.studentAddress,
                         [e.target.name]: e.target.value,
                       },
-                    })
+                    }))
                   }
                 />
                 <TextField
@@ -1146,8 +1122,8 @@ const Students = () => {
                   required
                   select
                   variant="outlined"
-                  error={!!updateError?.categoryErro}
-                  helperText={updateError?.categoryErro}
+                  error={!!updateError?.studentCategory}
+                  helperText={updateError?.studentCategory}
                   name="studentCategory"
                   value={selectedStudent.studentCategory || ""}
                   onChange={(e) =>
@@ -1168,8 +1144,8 @@ const Students = () => {
                   size="small"
                   label="Student Type"
                   required
-                  error={!!updateError?.studentTypeError}
-                  helperText={updateError?.studentTypeError}
+                  error={!!updateError?.studentType}
+                  helperText={updateError?.studentType}
                   select
                   variant="outlined"
                   name="studentType"
@@ -1192,13 +1168,13 @@ const Students = () => {
                   type="number"
                   label="Admission Year"
                   required
-                  error={!!updateError?.admissionYearError}
-                  helperText={updateError?.admissionYearError}
+                  error={!!updateError?.studentAdmissionYear}
+                  helperText={updateError?.studentAdmissionYear}
                   variant="outlined"
                   name="studentAdmissionYear"
                   value={selectedStudent.studentAdmissionYear || ""}
                   onChange={(e) =>
-                    setRegisterForm({
+                    setSelectedStudent({
                       ...selectedStudent,
                       [e.target.name]: Number(e.target.value),
                     })
@@ -1241,7 +1217,8 @@ const Students = () => {
             dialogHeading={"Confirm Deletion"}
           >
             <DeleteConfirmationDialogContent
-              entityName={selectedStudent?.studentFullName}
+              dialogTitle="Confirm Deletion"
+              dialogContent={`Are you sure you want to delete ${selectedStudent?.studentFullName}'s record? This action cannot be undone.`}
               onConfirm={handleDeleteStudent}
               onCancel={closeDeleteDialog}
             />
@@ -1253,13 +1230,17 @@ const Students = () => {
 
       {/* Snackbar for global notifications */}
       <Snackbar
-        open={!!isRegisterApiError}
-        autoHideDuration={2000}
-        onClose={() => setRegisterApiError((prev) => !prev)}
+        open={"snackbarOpen"}
+        autoHideDuration={6000}
+        onClose={"handleSnackbarClose"}
         anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
       >
-        <Alert severity="error" sx={{ width: "100%" }}>
-          {isRegisterApiError}
+        <Alert
+          onClose={""}
+          severity={"snackbarSeverity"}
+          sx={{ width: "100%" }}
+        >
+          {""}
         </Alert>
       </Snackbar>
     </Box>

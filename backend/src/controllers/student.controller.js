@@ -24,7 +24,7 @@ const addStudent = asyncHandler(async (req, res) => {
     studentAddress,
     studentCategory,
     studentCurrentCourseId,
-    StudentCurrentSemester,
+    studentCurrentSemester,
     studentType,
     studentAdmissionYear,
   } = req.body;
@@ -122,7 +122,7 @@ const addStudent = asyncHandler(async (req, res) => {
     studentCurrentCourseId: studentCurrentCourseId || "",
     studentType: studentType || "Regular",
     studentAdmissionYear: studentAdmissionYear || new Date().getFullYear(),
-    StudentCurrentSemester: StudentCurrentSemester,
+    studentCurrentSemester: studentCurrentSemester,
   });
 
   const student = await populateStudent(Student.findById(createdStudent._id));
@@ -185,7 +185,7 @@ const updateStudent = asyncHandler(async (req, res) => {
     studentCurrentCourseId,
     studentType,
     studentAdmissionYear,
-    StudentCurrentSemester,
+    studentCurrentSemester,
   } = req.body;
 
   if (
@@ -202,7 +202,7 @@ const updateStudent = asyncHandler(async (req, res) => {
       studentCurrentCourseId ||
       studentType ||
       studentAdmissionYear ||
-      StudentCurrentSemester
+      studentCurrentSemester
     )
   ) {
     throw new ApiError(400, "No valid fields provided for update.");
@@ -272,7 +272,7 @@ const updateStudent = asyncHandler(async (req, res) => {
           }) ||
             ""),
           ...(studentAdmissionYear !== undefined && { studentAdmissionYear }),
-          ...(StudentCurrentSemester && { StudentCurrentSemester }),
+          ...(studentCurrentSemester && { studentCurrentSemester }),
         },
       },
       {
@@ -321,37 +321,21 @@ const deleteStudent = asyncHandler(async (req, res) => {
     .json(new Apiresponse(200, student, "Student deleted successfully"));
 });
 
-const studentbyCourseAndSemester = asyncHandler(async (req, res) => {
-  console.log('controller', req.body);
-  
-  const { courseName, semester } = req.body;
+const filterStudents = asyncHandler(async (req, res) => {
+  console.log("req", req.body);
+  const { studentCurrentCourseId, studentCurrentSemester } = req.body;
 
-  // Validate input
-  if (!courseName) {
-    throw new ApiError(400, "Course name is required.");
-  }
+  // Construct query object dynamically
+  const query = {};
+  if (studentCurrentCourseId)
+    query.studentCurrentCourseId = studentCurrentCourseId;
+  if (studentCurrentSemester)
+    query.studentCurrentSemester = studentCurrentSemester;
 
-  // Build dynamic filter
-  const filter = {
-    studentCurrentCourseId: courseName, // Should be ID or name based on your DB
-  };
+  // Fetch students based on filter or return all
+  const students = await populateStudent(Student.find(query));
 
-  if (semester) {
-    filter.studentCurrentSemester = semester;
-  }
-
-  // Fetch data
-  const studentList = await Student.find(filter);
-
-  // Correct way to check for empty array
-  if (!studentList || studentList.length === 0) {
-    throw new ApiError(404, "No students found for given criteria.");
-  }
-
-  // Success response
-  return res
-    .status(200)
-    .json(new Apiresponse(200, studentList, "Students fetched successfully."));
+  res.status(200).json(new Apiresponse(200, students, "Fetched"));
 });
 
 export {
@@ -361,5 +345,5 @@ export {
   updateStudent,
   studentCount,
   deleteStudent,
-  studentbyCourseAndSemester,
+  filterStudents,
 };

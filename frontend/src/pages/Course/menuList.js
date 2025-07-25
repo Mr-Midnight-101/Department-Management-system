@@ -1,28 +1,18 @@
-export const semesterOptions = [
-  { value: "1 semester", label: "1 semester" },
-  { value: "2 semesters", label: "2 semesters" },
-  { value: "3 semesters", label: "3 semesters" },
-  { value: "4 semesters", label: "4 semesters" },
-  { value: "5 semesters", label: "5 semesters" },
-  { value: "6 semesters", label: "6 semesters" },
-  { value: "7 semesters", label: "7 semesters" },
-  { value: "8 semesters", label: "8 semesters" },
+export const Options = [
+  { value: 1, label: 1 },
+  { value: 2, label: 2 },
+  { value: 3, label: 3 },
+  { value: 4, label: 4 },
+  { value: 5, label: 5 },
+  { value: 6, label: 6 },
+  { value: 7, label: 7 },
+  { value: 8, label: 8 },
 ];
 export const durationoptions = [
-  {
-    label: "1 year",
-    value: "1 year",
-  },
-  {
-    label: "2 years",
-    value: "2 years",
-  },
-  {
-    label: "3 years",
-    value: "3 years",
-  },
-  {
-    label: "4 years",
-    value: "4 years",
-  },
+  { value: 1, label: 1 },
+  { value: 2, label: 2 },
+  { value: 3, label: 3 },
+  { value: 4, label: 4 },
+  { value: 5, label: 5 },
+  { value: 6, label: 6 },
 ];

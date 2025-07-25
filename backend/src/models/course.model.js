@@ -30,10 +30,10 @@ const CourseSchema = new mongoose.Schema(
       ],
     },
     courseDuration: {
-      type: String, // Expected format: "1 year", "2 years", etc.
+      type: Number, // Expected format: "1 year", "2 years", etc.
       required: [true, "Course academic year is required."],
       enum: {
-        values: ["1 year", "2 years", "3 years", "4 years"],
+        values: [1, 2, 3, 4, 5, 6],
         message: "Unknown Value.",
       },
     },

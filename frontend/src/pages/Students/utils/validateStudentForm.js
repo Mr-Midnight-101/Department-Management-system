@@ -1,13 +1,15 @@
 const validateStudentForm = (form) => {
-  console.log("validation form: ", form);
   const errors = {};
   //Full Name
-  if (!form.studentFullName?.trim()) {
+  if (!form.studentFullName) {
     errors.nameError = "Full name is required.";
   }
   //course
-  if (!form.studentFullName?.trim()) {
+  if (!form?.studentCurrentCourseId) {
     errors.courseError = "Course is required.";
+  }
+  if (!form?.studentCurrentSemester) {
+    errors.semError = "Semester is required.";
   }
 
   // Date of Birth
@@ -25,39 +27,39 @@ const validateStudentForm = (form) => {
   }
 
   // Enrollment Number
-  if (!form.studentEnrollmentNumber?.trim()) {
+  if (!form.studentEnrollmentNumber) {
     errors.enrollError = "Enrollment number is required.";
   }
 
   // Roll Number
-  if (!form.studentRollNumber?.trim()) {
+  if (!form.studentRollNumber) {
     errors.rollError = "Roll number is required.";
   }
 
   // Email
-  if (!form.studentEmail?.trim()) {
+  if (!form.studentEmail) {
     errors.emailError = "Email is required.";
   } else if (!/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(form.studentEmail)) {
     errors.emailError = "Invalid email format.";
   }
 
   // Contact Number
-  if (!form.studentContactNumber?.trim()) {
+  if (!form.studentContactNumber) {
     errors.contactError = "Contact number is required.";
   }
 
   // Father's Name
-  if (!form.studentFatherName?.trim()) {
+  if (!form.studentFatherName) {
     errors.fnameError = "Father's name is required.";
   }
 
   // Category
-  if (!form.studentCategory?.trim()) {
+  if (!form.studentCategory) {
     errors.categoryErro = "Category is required.";
   }
 
   // Student Type
-  if (!form.studentType?.trim()) {
+  if (!form.studentType) {
     errors.studentTypeError = "Student type is required.";
   }
 
