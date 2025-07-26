@@ -1,5 +1,6 @@
 /* eslint-disable no-unused-vars */
 import axios from "axios";
+import { createAttendance } from "./attendance";
 
 export const studentCount = async () =>
   await axios
@@ -37,8 +38,13 @@ export const studentRegister = async (registerData) => {
     studentAdmissionYear: registerData?.studentAdmissionYear,
     studentCurrentSemester: registerData?.studentCurrentSemester,
   };
-
-  console.log("student just before api call", student);
+  const attendanceData = {
+    attendanceStudent: registerData?.studentFullName,
+    attendanceCourse: registerData?.studentCurrentCourseId,
+    attendanceSemester: registerData?.studentCurrentSemester,
+  };
+  console.log("student attendance just before api call", attendanceData);
+  await axios.post("/api/attendance", attendanceData);
   return await axios.post("/api/student", student, {
     withCredentials: true, // ✅ Important for cookies/session
   });

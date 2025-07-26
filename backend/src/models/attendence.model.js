@@ -2,58 +2,40 @@ import mongoose from "mongoose";
 
 const AttendanceSchema = new mongoose.Schema(
   {
-    attendanceStudent: [
-      {
-        StudentId: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "Student",
-          required: true,
-        },
-        attendanceStatus: {
-          type: String,
-          enum: ["Present", "Absent", "Late", "Excused"],
-          default: "Absent",
-        },
-      },
-    ],
+    attendanceStudent: {
+      type: String,
+      required: true,
+    },
     attendanceRecordedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Teacher",
-      required: true,
     },
     attendanceCourse: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Course",
-      required: true,
     },
     attendanceSubject: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Subject",
-      required: true,
     },
     attendanceSemester: {
       type: String,
       required: true,
-      enum: [
-        "First",
-        "Second",
-        "Third",
-        "Fourth",
-        "Fifth",
-        "Sixth",
-        "Seventh",
-        "Eighth",
-      ],
     },
 
     attendanceDate: {
       type: Date,
-      required: true,
+    },
+    attendanceStatus: {
+      type: String,
+      default: "Absent",
+      enum: ["Present", "Absent", "Late", "Excused"],
     },
   },
   {
     timestamps: true,
   }
 );
+//AttendanceSchema.index({ studentId: 1, date: 1, subject: 1 }, { unique: true });
 
 export const Attendance = mongoose.model("Attendance", AttendanceSchema);

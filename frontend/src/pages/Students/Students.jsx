@@ -76,10 +76,6 @@ const Students = () => {
     fetchCourseList();
   }, [fetchCourseList]);
 
-  useEffect(() => {
-    fetchCourseList();
-  }, [fetchCourseList]);
-
   // ⭐ Fetch students
 
   const [isfetchError, setIsFetchError] = useState(""); // Changed to null or object, not string
@@ -169,12 +165,11 @@ const Students = () => {
 
     try {
       const response = await studentRegister(formData);
-      console.log("student Form daata in handler", formData);
-
       if (response.status === 201) {
         closeRegisterDialog(); // Close and trigger refresh
       }
     } catch (error) {
+      console.log("error in api call ", error);
       setRegisterApiError(error?.response?.data?.message);
     } finally {
       setRegisterLoading(false);

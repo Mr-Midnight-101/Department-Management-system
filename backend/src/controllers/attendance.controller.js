@@ -3,175 +3,118 @@ import ApiError from "../utils/ApiError.js";
 import Apiresponse from "../utils/Apiresponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
-const getStudentsByCourseAndSemester = asyncHandler(async (req, res) => {
-  const { attendanceCourse, attendanceSemester, attendanceSubject } = req.body;
+const addAttendance = asyncHandler(async (req, res) => {
+  console.log("inside controller", req.body);
 
-  if (!attendanceCourse) {
-    throw new ApiError(400, "Course is required");
+  const { attendanceStudent, attendanceCourse, attendanceSemester } = req.body;
+  if (!attendanceStudent || !attendanceCourse || !attendanceSemester) {
+    throw new ApiError(400, "Student, Course, and Semester are required");
   }
 
-  const queryFilter = { attendanceCourse };
+  const register = await Attendance.create({
+    attendanceStudent: attendanceStudent,
+    attendanceCourse: attendanceCourse,
+    attendanceSemester: attendanceSemester,
+    attendanceStatus: "Absent", //modify in update
+    attendanceRecordedBy: null, //modify in update
+    attendanceSubject: null, //modify in update
+    attendanceDate: null, //modify in update
+  });
+  console.log("verify attendance", register);
 
-  if (attendanceSemester) queryFilter.attendanceSemester = attendanceSemester;
-  if (attendanceSubject) queryFilter.attendanceSubject = attendanceSubject;
+  const verify = await Attendance.findOne({ _id: register._id });
 
-  const records = await Attendance.find(queryFilter).populate(
-    "attendanceStudent.StudentId"
-  );
-
-  if (!records || records.length === 0) {
-    throw new ApiError(
-      404,
-      "No attendance records found for the given filters"
-    );
+  if (!verify) {
+    throw new ApiError(500, "Failed to create attendance record");
   }
-
   return res
     .status(200)
     .json(
-      new Apiresponse(200, records, "Attendance records fetched successfully")
+      new Apiresponse(201, verify, "Attendance record created successfully")
     );
 });
 
 const ModifyAttendance = asyncHandler(async (req, res) => {
-  const {
-    studentId,
-    attendanceDate,
-    courseId,
-    subjectId,
-    semester,
-    attendanceStatus,
-  } = req.body;
+  const { _id, attendanceRecordedBy, attendanceStatus } = req.body;
 
-  if (!studentId || !attendanceDate || !courseId || !subjectId || !semester) {
-    throw new ApiError(400, "Required fields missing");
+  if (!_id) {
+    throw new ApiError(400, "Attendance ID is required");
   }
 
-  const updatedAttendance = await Attendance.findOneAndUpdate(
+  const modify = await Attendance.findByIdAndUpdate(
+    _id,
     {
-      attendanceCourse: courseId,
-      attendanceSubject: subjectId,
-      attendanceSemester: semester,
-      attendanceDate: new Date(attendanceDate),
-      "attendanceStudent.StudentId": studentId,
+      attendanceRecordedBy,
+      attendanceStatus,
     },
-    {
-      $set: {
-        "attendanceStudent.$.attendanceStatus": attendanceStatus,
-      },
-    },
-    { new: true }
+    { new: true } // Return the updated document
   );
 
-  if (!updatedAttendance) {
-    throw new ApiError(404, "Student attendance not found");
-  }
-
-  return res
-    .status(200)
-    .json(
-      new Apiresponse(200, updatedAttendance, "Attendance updated successfully")
-    );
-});
-
-const removeStudentAttendance = asyncHandler(async (req, res) => {
-  const { studentId, attendanceDate, courseId, subjectId, semester } = req.body;
-
-  if (!studentId || !attendanceDate || !courseId || !subjectId || !semester) {
-    throw new ApiError(400, "Required fields missing");
-  }
-
-  const updatedDoc = await Attendance.findOneAndUpdate(
-    {
-      attendanceCourse: courseId,
-      attendanceSubject: subjectId,
-      attendanceSemester: semester,
-      attendanceDate: new Date(attendanceDate),
-    },
-    {
-      $pull: {
-        attendanceStudent: { StudentId: studentId },
-      },
-    },
-    { new: true }
-  );
-
-  if (!updatedDoc) {
+  if (!modify) {
     throw new ApiError(404, "Attendance record not found");
   }
 
   return res
     .status(200)
-    .json(new Apiresponse(200, updatedDoc, "Student removed from attendance"));
+    .json(new Apiresponse(200, modify, "Attendance updated successfully"));
 });
 
-const addAttendance = asyncHandler(async (req, res) => {
-  const {
-    attendanceStudent,
-    attendanceRecordedBy,
-    attendanceCourse,
-    attendanceSubject,
-    attendanceSemester,
-    attendanceDate,
-  } = req.body;
+const getStudentsByCourseAndSemesterAndSubject = asyncHandler(
+  async (req, res) => {
+    const {
+      attendanceCourse,
+      attendanceSubject,
+      attendanceSemester,
+      attendanceDate,
+    } = req.body;
 
-  // Validate required fields
-  if (
-    !attendanceStudent ||
-    !Array.isArray(attendanceStudent) ||
-    attendanceStudent.length === 0 ||
-    !attendanceRecordedBy ||
-    !attendanceCourse ||
-    !attendanceSubject ||
-    !attendanceSemester ||
-    !attendanceDate
-  ) {
-    throw new ApiError(
-      400,
-      "All attendance fields are required and must be valid."
-    );
+    // Build dynamic filter
+    const queryFilter = {};
+    if (attendanceCourse) queryFilter.attendanceCourse = attendanceCourse;
+    if (attendanceSubject) queryFilter.attendanceSubject = attendanceSubject;
+    if (attendanceSemester) queryFilter.attendanceSemester = attendanceSemester;
+    if (attendanceDate) queryFilter.attendanceDate = attendanceDate;
+
+    // Fetch attendance records with relevant student/course/teacher data
+    const attendanceRecords = await Attendance.find(queryFilter).populate([
+      {
+        path: "attendanceRecordedBy",
+        select: "_id teacherFullName",
+      },
+      {
+        path: "attendanceSubject",
+        select: "_id subjectCode",
+      },
+      {
+        path: "attendanceCourse",
+        select: "_id courseCode",
+      },
+    ]);
+
+    if (!attendanceRecords || attendanceRecords.length === 0) {
+      throw new ApiError(
+        404,
+        "No attendance records found for the given filters."
+      );
+    }
+
+    return res
+      .status(200)
+      .json(
+        new Apiresponse(
+          200,
+          attendanceRecords,
+          "Attendance records fetched successfully."
+        )
+      );
   }
-
-  // Create attendance record
-  const newAttendance = await Attendance.create({
-    attendanceStudent, // Must be an array of { StudentId, attendanceStatus }
-    attendanceRecordedBy,
-    attendanceCourse,
-    attendanceSubject,
-    attendanceSemester,
-    attendanceDate,
-  });
-
-  // Verify creation
-  const savedAttendance = await Attendance.findById(newAttendance._id)
-    .populate("attendanceStudent.StudentId", "name rollNumber") // optional
-    .populate("attendanceCourse", "courseName")
-    .populate("attendanceSubject", "subjectName")
-    .populate("attendanceRecordedBy", "name");
-
-  if (!savedAttendance) {
-    throw new ApiError(500, "Failed to fetch saved attendance record.");
-  }
-
-  return res
-    .status(201)
-    .json(
-      new Apiresponse(201, savedAttendance, "Attendance recorded successfully")
-    );
-});
-
-const attendanceCount = asyncHandler(async (req, res) => {
-  const count = await Attendance.countDocuments();
-  if (!count) {
-    throw new ApiError(404, "No attendance found");
-  }
-  return res.status(200).json(new Apiresponse(200, count, "Count"));
-});
-
+);
+const attendanceCount = asyncHandler(async (req, res) => {});
+const removeStudentAttendance = asyncHandler(async (req, res) => {});
 export {
-  getStudentsByCourseAndSemester,
-  ModifyAttendance,
-  removeStudentAttendance,
   addAttendance,
+  ModifyAttendance,
+  getStudentsByCourseAndSemesterAndSubject,
   attendanceCount,
+  removeStudentAttendance,
 };

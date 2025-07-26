@@ -20,7 +20,7 @@ import { verifyJWT } from "../middleware/auth.middleware.js";
 import { upload } from "../middleware/multer.middleware.js";
 
 const teacherRoutes = Router();
-teacherRoutes.route("/refresh-token").post(verifyJWT, refreshAccessToken);
+teacherRoutes.route("/refresh-token").post(refreshAccessToken);
 // Route to get the count of all teachers
 teacherRoutes.route("/count").get(teacherCount);
 
@@ -42,20 +42,20 @@ teacherRoutes.route("/login").post(loginTeacher);
 // Route to refresh access token using refresh token
 
 // Route for teacher logout (Requires authentication)
-teacherRoutes.route("/logout").post(verifyJWT, logoutTeacher);
+teacherRoutes.route("/logout").post(logoutTeacher);
 
 // Route to change authenticated teacher's password (Requires authentication)
-teacherRoutes.route("/change-password").patch(verifyJWT, changePassword);
+teacherRoutes.route("/change-password").patch(changePassword);
 
 // Route to get authenticated teacher's current details (Requires authentication)
-teacherRoutes.route("/user").get(verifyJWT, getCurrentTeacher);
+teacherRoutes.route("/user").get(getCurrentTeacher);
 
 // Route to update authenticated teacher's non-sensitive details (Requires authentication)
-teacherRoutes.route("/update-details").patch(verifyJWT, updateTeacherDetails);
+teacherRoutes.route("/update-details").patch(updateTeacherDetails);
 
 // Route to update authenticated teacher's avatar (Requires authentication and file upload)
 teacherRoutes.route("/update-avatar").patch(
-  verifyJWT, // Ensure user is authenticated first
+  // Ensure user is authenticated first
   upload.single("avatar"), // Handle avatar file upload
   updateTeacherAvatar // Process the update
 );

@@ -6,6 +6,7 @@ import {
   deleteSubject,
   subjectCount,
 } from "../controllers/subject.controller.js";
+import { verifyJWT } from "../middleware/auth.middleware.js";
 
 const subjectRoutes = Router();
 
