@@ -25,7 +25,11 @@ const RecentActivity = () => {
   }, []);
 
   return (
-    <GlassEffect>
+    <GlassEffect
+      sx={{
+        width: "100%",
+      }}
+    >
       <Typography variant="h6" gutterBottom color={colors.text[100]}>
         Recent Activity
       </Typography>

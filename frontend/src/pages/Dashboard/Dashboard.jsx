@@ -1,12 +1,16 @@
 /* eslint-disable no-unused-vars */
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { Box, Typography } from "@mui/material";
 import RecentActivity from "./RecentActivity";
 import PageSectionWrapper from "../../components/PageSectionWrapper";
 import GlassEffect from "../../components/GlassEffect";
 import axios from "axios";
+import UserProvider, { UserContext } from "../UserContext/UserContext";
 
 const Dashboard = () => {
+  const user = useContext(UserContext);
+  const loggedUser = user?.user;
+  console.log(loggedUser);
   const [Faculty, setFaculty] = useState(0);
   const [Enrolled, setEnrolled] = useState(0);
   const [Courses, setCourses] = useState(0);
@@ -26,6 +30,21 @@ const Dashboard = () => {
   }, [Faculty]);
   return (
     <PageSectionWrapper>
+      <Box width="100%" display="flex" m={1} mx={0}>
+        <GlassEffect sx={{ flex: "1" }}>
+          <Box textAlign="center">
+            <Typography
+              variant="h4"
+              sx={{
+                textTransform: "capitalize",
+              }}
+            >
+              {`Welcome in, ${loggedUser?.teacherFullName}`}
+            </Typography>
+            <Typography variant="h4"> </Typography>
+          </Box>
+        </GlassEffect>
+      </Box>
       <Box display="flex" flexWrap="wrap" gap={1} width="100%" flexGrow="1">
         <GlassEffect sx={{ flex: "1" }}>
           <Box textAlign="center">
@@ -51,6 +70,9 @@ const Dashboard = () => {
             <Typography variant="h5"> Academic Subjects</Typography>
           </Box>
         </GlassEffect>
+      </Box>
+      <Box width="100%" display="flex" m={1} mx={0}>
+        <RecentActivity />
       </Box>
     </PageSectionWrapper>
   );
