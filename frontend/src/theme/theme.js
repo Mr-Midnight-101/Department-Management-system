@@ -288,7 +288,7 @@ export const createCustomTheme = (mode) => {
               fontSize: "0.9rem",
               paddingLeft: "24px",
             },
-            "& .MuiDataGrid-columnHeader": {
+            "& .MuiDataGrid-columnHeader,  .MuiDataGrid-filler ": {
               background: `${colors.primary[900]} !important`,
               borderBottom: "none",
             },
@@ -311,7 +311,10 @@ export const createCustomTheme = (mode) => {
             "& .MuiDataGrid-cell:hover": {
               cursor: "pointer",
             },
-            "& .MuiDataGrid-filler , .MuiDataGrid-scrollbarFiller--header": {
+            ".MuiDataGrid-scrollbarFiller--header": {
+              backgroundColor: colors.primary[900],
+            },
+            "& .MuiDataGrid-filler": {
               backgroundColor: colors.primary[900],
             },
           },

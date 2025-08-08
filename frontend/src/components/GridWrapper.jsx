@@ -33,9 +33,9 @@ const GridWrapper = ({ columns, rows, isDatafetched }) => {
 
   return (
     <>
-      <Box height="60vh" width="100%" m="24px 0">
+      <Box  height="60vh" width="100%" m="24px 0">
         <DataGrid
-          apiRef={apiRef}
+                 apiRef={apiRef}
           rows={rows}
           columns={flexibleColumns}
           loading={!isDatafetched}
