@@ -179,3 +179,16 @@ npm install
 npm start
 
 The application should then be available locally through the development server.
+👨‍💻 Author
+
+Prahlad Bathre
+
+MCA Graduate | Junior Full-Stack Developer
+
+Technologies
+
+React.js · Node.js · Express.js · MongoDB · JavaScript · Python · FastAPI · SQL
+
+Connect
+GitHub
+LinkedIn
