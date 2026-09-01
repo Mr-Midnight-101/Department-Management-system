@@ -4,9 +4,12 @@ A full-stack web application developed as an **MCA final-year project** for mana
 
 The application follows an **MVC architecture** on the backend and uses RESTful APIs to communicate between the React frontend and Node.js/Express backend.
 
-> **Project Status:** Academic / Final-Year Project  
-> **Current Deployment:** Not publicly deployed
+> **Project Type:** MCA Final-Year Project  
+> **Deployment:** Frontend and Backend deployed on Render
 
+## 🌐 Live Demo
+
+🔗 [Department Management System](https://campsync.onrender.com)
 ---
 
 ## ✨ Features
@@ -26,7 +29,13 @@ The application follows an **MVC architecture** on the backend and uses RESTful 
 - ⚙️ Environment variable configuration using dotenv
 - 🧩 MVC-based backend structure
 - 🔧 Development workflow using Nodemon
+  
+## 🌐 Deployment
 
+The application is deployed using Render:
+
+- **Frontend:** React.js application hosted on Render
+- **Backend:** Node.js / Express.js API hosted on Render
 ---
 
 ## 🛠️ Tech Stack
@@ -141,12 +150,13 @@ Department-Management-system/
 │   └── server.js
 │
 └── README.md
+```
 🚀 Getting Started
 Prerequisites
 
 Make sure you have the following installed:
 
-Node.js
+```Node.js
 MongoDB
 Git
 1. Clone the repository
@@ -156,9 +166,9 @@ cd Department-Management-system
 cd server
 npm install
 3. Configure environment variables
-
+```
 Create a .env file inside the server directory.
-
+```
 Example:
 
 MONGO_URI=your_mongodb_connection_string
@@ -179,6 +189,7 @@ npm install
 npm start
 
 The application should then be available locally through the development server.
+```
 👨‍💻 Author
 
 Prahlad Bathre
@@ -192,3 +203,6 @@ React.js · Node.js · Express.js · MongoDB · JavaScript · Python · FastAPI 
 Connect
 GitHub
 LinkedIn
+
+📄 License
+This project is available under the MIT License.
