@@ -37,6 +37,19 @@ The application is deployed using Render:
 - **Frontend:** React.js application hosted on Render
 - **Backend:** Node.js / Express.js API hosted on Render
 ---
+## 📸 Screenshots
+🔐 Login page
+<img width="1917" height="862" alt="login" src="https://github.com/user-attachments/assets/0c0459bb-f576-4326-a014-ed11931b844d" />
+
+📊 Main/dashboard page
+<img width="1917" height="862" alt="dashboard" src="https://github.com/user-attachments/assets/83a3f1e6-8147-4488-b8b0-71607e70b192" />
+
+🏢 Department management page
+<img width="1906" height="865" alt="attendance management" src="https://github.com/user-attachments/assets/d4fe2fc0-4159-47ec-9c33-b9033c00143b" />
+
+✏️ Add/Edit department or CRUD interface
+<img width="1917" height="858" alt="regitration" src="https://github.com/user-attachments/assets/44ff367b-ce1a-46fd-b9f3-3ec6920b5e65" />
+
 
 ## 🛠️ Tech Stack
 
@@ -192,6 +205,7 @@ The application should then be available locally through the development server.
 ```
 👨‍💻 Author
 
+
 Prahlad Bathre
 
 MCA Graduate | Junior Full-Stack Developer
@@ -205,4 +219,5 @@ GitHub
 LinkedIn
 
 📄 License
+
 This project is available under the MIT License.
